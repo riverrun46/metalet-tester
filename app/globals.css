@@ -1,0 +1,36 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  @apply bg-gray-100;
+}
+
+.mor-shadow {
+  box-shadow: 15px 15px 30px #dddee0, -15px -15px 30px #ffffff;
+}
+
+.mor-shadow-sm {
+  box-shadow: 7px 7px 14px #e0e0e2, -7px -7px 14px #ffffff;
+}
+
+.mor-inner {
+  box-shadow: inset 5px 5px 10px #e0e0e2, inset -5px -5px 10px #ffffff;
+}
+
+.btn {
+  @apply h-10 rounded-full text-sm font-medium text-violet-500 mor-shadow-sm hover:text-violet-700;
+}
+
+.btn.muted {
+  @apply text-gray-300;
+}
+
+.title {
+  @apply text-base font-light text-gray-500;
+}
+
+/* 隐藏scrollbar */
+*::-webkit-scrollbar {
+  display: none;
+}
