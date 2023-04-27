@@ -56,9 +56,9 @@ export default function Home() {
 
   return (
     <main className="flex min-h-screen items-center justify-center">
-      <div className="h-[80vh] aspect-[1.4] mor-shadow rounded-xl p-8 grid grid-cols-2 gap-8">
+      <div className="h-[80vh] aspect-[1.4] mor-shadow rounded-xl p-8 grid grid-cols-2 gap-4">
         {/* 操作面板 */}
-        <div className="col-span-1">
+        <div className="col-span-1 overflow-y-auto px-4 pb-4">
           <h3 className="title col-span-3">连接</h3>
           <div className="mt-4 grid grid-cols-3 gap-4">
             <button className="btn" onClick={() => command('connect', '连接')}>
@@ -70,7 +70,10 @@ export default function Home() {
             <button className="btn" onClick={() => command('isConnected', '查看连接状态')}>
               查看连接状态
             </button>
-            <button className="btn muted" disabled onClick={() => command('isConnected', '查看连接状态')}>
+            <button className="btn" onClick={() => command('getNetwork', '查询网络')}>
+              查询网络
+            </button>
+            <button className="btn" onClick={() => command('switchNetwork', '切换网络')}>
               切换网络
             </button>
           </div>
@@ -101,7 +104,7 @@ export default function Home() {
             <div className="mt-4 grid grid-cols-2 gap-4">
               {cases.map((c, i) => (
                 <button
-                  className={`btn col-span-1 !text-xs p-2 h-20 !rounded-2xl ${c.disabled && 'muted'}`}
+                  className={`btn col-span-1 !text-xs p-2 h-20 !rounded-2xl break-all ${c.disabled && 'muted'}`}
                   disabled={c.disabled}
                   key={i}
                   onClick={() => transfer({ caseIndex: i })}
