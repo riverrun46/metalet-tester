@@ -19,7 +19,7 @@ body {
 }
 
 .btn {
-  @apply h-10 rounded-full text-sm font-medium text-violet-500 mor-shadow-sm hover:text-violet-700;
+  @apply min-h-[2.5rem] rounded-full text-sm font-medium text-violet-500 mor-shadow-sm hover:text-violet-700;
 }
 
 .btn.muted {
