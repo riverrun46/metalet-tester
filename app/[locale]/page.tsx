@@ -1,10 +1,17 @@
 'use client'
 
-import { Inter } from 'next/font/google'
 import { useEffect, useState } from 'react'
+import { useLocale, useTranslations } from 'next-intl'
+import Link from 'next/link'
+
 import cases from '@/app/data/cases'
 
 export default function Home() {
+  const t = useTranslations('Index')
+  const locale = useLocale()
+  const theOther = locale === 'en' ? '中' : 'EN'
+  const theOtherPath = locale === 'en' ? '/zh' : '/en'
+
   const [wallet, setWallet] = useState<any | null>(null)
   useEffect(() => {
     setWallet(window.metaidwallet)
@@ -12,9 +19,11 @@ export default function Home() {
 
   const [consoleMessages, setConsoleMessages] = useState<string[]>([])
 
-  const command = async (cmd: string, name: string, params?: any) => {
+  const command = async (cmd: string, params?: any) => {
     // 打印命令到控制台消息
-    setConsoleMessages((prev) => [...prev, `> ${name}中……`])
+    const name = t(cmd)
+    const newMessage = locale === 'en' ? `> ${name}...` : `> ${name}中……`
+    setConsoleMessages((prev) => [...prev, newMessage])
     const res = await wallet[cmd](params)
 
     console.log({ res })
@@ -35,7 +44,7 @@ export default function Home() {
     if (consoleEl) {
       consoleEl.scrollTop = consoleEl.scrollHeight
     }
-    // 等待 1 秒
+    // 等待 0.1 秒
     await new Promise((resolve) => setTimeout(resolve, 100))
     // 再滚动一次
     if (consoleEl) {
@@ -46,7 +55,7 @@ export default function Home() {
   const transfer = async ({ caseIndex }: { caseIndex: number }) => {
     const chooseCase = cases[caseIndex]
 
-    await command('transfer', `${chooseCase.name}`, {
+    await command('transfer', {
       tasks: chooseCase.tasks,
       broadcast: chooseCase.broadcast,
     })
@@ -59,45 +68,45 @@ export default function Home() {
       <div className="h-[80vh] aspect-[1.4] mor-shadow rounded-xl p-8 grid grid-cols-2 gap-4">
         {/* 操作面板 */}
         <div className="col-span-1 overflow-y-auto px-4 pb-4">
-          <h3 className="title col-span-3">连接</h3>
+          <h3 className="title col-span-3">{t('connect')}</h3>
           <div className="mt-4 grid grid-cols-3 gap-4">
-            <button className="btn" onClick={() => command('connect', '连接')}>
-              连接
+            <button className="btn" onClick={() => command('connect')}>
+              {t('connect')}
             </button>
-            <button className="btn" onClick={() => command('disconnect', '断开连接')}>
-              断开连接
+            <button className="btn" onClick={() => command('disconnect')}>
+              {t('disconnect')}
             </button>
-            <button className="btn" onClick={() => command('isConnected', '查看连接状态')}>
-              查看连接状态
+            <button className="btn" onClick={() => command('isConnected')}>
+              {t('isConnected')}
             </button>
-            <button className="btn" onClick={() => command('getNetwork', '查询网络')}>
-              查询网络
+            <button className="btn" onClick={() => command('getNetwork')}>
+              {t('getNetwork')}
             </button>
-            <button className="btn" onClick={() => command('switchNetwork', '切换网络')}>
-              切换网络
+            <button className="btn" onClick={() => command('switchNetwork')}>
+              {t('switchNetwork')}
             </button>
           </div>
 
-          <h3 className="title col-span-3 mt-8">获取账号信息</h3>
+          <h3 className="title col-span-3 mt-8">{t('account')}</h3>
           <div className="mt-4 grid grid-cols-3 gap-4">
-            <button className="btn" onClick={() => command('getAddress', '获取地址')}>
-              获取地址
+            <button className="btn" onClick={() => command('getAddress')}>
+              {t('getAddress')}
             </button>
             <button className="btn muted" disabled>
-              获取公钥
+              {t('getPublicKey')}
             </button>
-            <button className="btn" onClick={() => command('getBalance', '获取余额')}>
-              获取余额
+            <button className="btn" onClick={() => command('getBalance')}>
+              {t('getBalance')}
             </button>
           </div>
 
           <h3 className="title col-span-3 mt-8 flex items-center justify-between">
-            <span>交易</span>
+            <span>{t('transfer')}</span>
             <button
               className="rounded-full text-xs text-gray-500 py-1 px-4 mor-shadow-sm font-medium"
               onClick={() => setShowTransfer((prev) => !prev)}
             >
-              {showTransfer ? '收起' : '展开'}
+              {showTransfer ? t('collapse') : t('expand')}
             </button>
           </h3>
           {showTransfer && (
@@ -117,20 +126,28 @@ export default function Home() {
         </div>
 
         <div className="col-span-1 flex flex-col overflow-y-hidden">
-          {/* 清空按钮 */}
-          <div className="flex justify-end px-4">
+          <div className="flex justify-end px-4 pt-4 gap-x-4">
+            {/* 切换语言 */}
+            <Link
+              href={theOtherPath}
+              className="w-16 h-6 mor-shadow-sm font-medium text-gray-500 rounded-full text-xs flex items-center justify-center"
+            >
+              {theOther}
+            </Link>
+
+            {/* 清空按钮 */}
             <button
-              className="top-4 right-4  px-6 py-1 mor-shadow-sm font-medium text-gray-500 rounded-full text-xs"
+              className="w-16 h-6 mor-shadow-sm font-medium text-gray-500 rounded-full text-xs flex items-center justify-center"
               onClick={() => setConsoleMessages([])}
             >
-              清空
+              {t('clear')}
             </button>
           </div>
 
           {/* 控制台 */}
           <div className="mor-inner rounded-xl p-4 text-gray-400 text-sm overflow-y-scroll mt-4 grow" id="console">
             {consoleMessages.map((msg, i) => (
-              <p key={i} className={msg.startsWith('>') ? 'text-gray-400 mt-4 break-all' : 'break-all text-violet-700'}>
+              <p key={i} className={msg.startsWith('>') ? 'text-gray-400 mt-4 break-all' : 'break-all text-indigo-700'}>
                 {msg}
               </p>
             ))}

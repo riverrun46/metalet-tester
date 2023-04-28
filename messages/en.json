@@ -1,0 +1,17 @@
+{
+  "Index": {
+    "connect": "Connect",
+    "clear": "Clear",
+    "collapse": "Collapse",
+    "expand": "Expand",
+    "disconnect": "Disconnect",
+    "isConnected": "IsConnected",
+    "getNetwork": "GetNetwork",
+    "switchNetwork": "SwitchNetwork",
+    "account": "Account",
+    "getAddress": "GetAddress",
+    "getPublicKey": "GetPublicKey",
+    "getBalance": "GetBalance",
+    "transfer": "Transfer"
+  }
+}

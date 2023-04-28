@@ -18,7 +18,7 @@ const cases: {
 }[] = [
   {
     id: 1,
-    name: '转账1: 1000sats - testnet - 广播',
+    name: '1: 1000sats - testnet - broadcast',
     tasks: [
       {
         receivers: [
@@ -33,7 +33,7 @@ const cases: {
   },
   {
     id: 2,
-    name: '转账2: 1500sats - testnet - 不广播',
+    name: '2: 1500sats - testnet - no broadcast',
     tasks: [
       {
         receivers: [
@@ -48,7 +48,7 @@ const cases: {
   },
   {
     id: 3,
-    name: '转账3: 2000sats+1500sats - testnet - 广播',
+    name: '3: 2000sats+1500sats - testnet - broadcast',
     tasks: [
       {
         receivers: [
@@ -67,7 +67,7 @@ const cases: {
   },
   {
     id: 4,
-    name: '转账4: 2000sats+1500sats+3000sats - testnet - 不广播',
+    name: '4: 2000sats+1500sats+3000sats - testnet - no broadcast',
     tasks: [
       {
         receivers: [
@@ -90,7 +90,7 @@ const cases: {
   },
   {
     id: 5,
-    name: '转账5: 2000sats+1500sats+3000sats - mainnet - 广播',
+    name: '5: 2000sats+1500sats+3000sats - mainnet - broadcast',
     disabled: true,
     tasks: [
       {
@@ -114,7 +114,7 @@ const cases: {
   },
   {
     id: 6,
-    name: '转账6: 46ft+1500sats - testnet - 广播',
+    name: '6: 46ft+1500sats - testnet - broadcast',
     tasks: [
       {
         genesis: '039032ade3d49a6d4ff41c33b3d63ea5c986f310',
@@ -139,7 +139,7 @@ const cases: {
   },
   {
     id: 7,
-    name: '转账7: 46ft+1500sats - testnet - 不广播',
+    name: '7: 46ft+1500sats - testnet - no broadcast',
     tasks: [
       {
         genesis: '039032ade3d49a6d4ff41c33b3d63ea5c986f310',

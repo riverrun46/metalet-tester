@@ -1,0 +1,17 @@
+{
+  "Index": {
+    "connect": "连接",
+    "clear": "清除",
+    "collapse": "收起",
+    "expand": "展开",
+    "disconnect": "断开连接",
+    "isConnected": "查看连接状态",
+    "getNetwork": "查询网络",
+    "switchNetwork": "切换网络",
+    "account": "账户信息",
+    "getAddress": "查询地址",
+    "getPublicKey": "查询公钥",
+    "getBalance": "查询余额",
+    "transfer": "转账"
+  }
+}
