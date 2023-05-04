@@ -11,7 +11,7 @@ export function generateStaticParams() {
 
 export const metadata: Metadata = {
   title: 'Metalet Tester',
-  description: 'Metalet钱包API测试',
+  description: 'Metalet Wallet API Tester',
 }
 
 export default async function RootLayout({ children, params: { locale } }: { children: React.ReactNode; params: any }) {

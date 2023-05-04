@@ -12,6 +12,12 @@
     "getAddress": "GetAddress",
     "getPublicKey": "GetPublicKey",
     "getBalance": "GetBalance",
-    "transfer": "Transfer"
+    "transfer": "Transfer",
+
+    "encryption": "Encryption",
+    "eciesEncrypt": "ECIES Encrypt",
+    "eciesDecrypt": "ECIES Decrypt",
+    "broadcast": "Broadcast",
+    "merge": "Merge"
   }
 }

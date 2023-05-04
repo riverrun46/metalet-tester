@@ -162,6 +162,50 @@ const cases: {
     ],
     broadcast: false,
   },
+
+  {
+    id: 8,
+    name: '8: 2000sats+46ft+1500sats - testnet - no broadcast',
+    tasks: [
+      {
+        receivers: [
+          {
+            amount: '2000',
+            address: 'myPqtRpy1Ay65U5RmwX5q2sjXqcjDRCyVx',
+          },
+        ],
+      },
+      // {
+      //   genesis: '039032ade3d49a6d4ff41c33b3d63ea5c986f310',
+      //   codehash: 'a2421f1e90c6048c36745edd44fad682e8644693',
+      //   receivers: [
+      //     {
+      //       amount: '146',
+      //       address: 'myPqtRpy1Ay65U5RmwX5q2sjXqcjDRCyVx',
+      //     },
+      //   ],
+      // },
+      {
+        genesis: '039032ade3d49a6d4ff41c33b3d63ea5c986f310',
+        codehash: 'a2421f1e90c6048c36745edd44fad682e8644693',
+        receivers: [
+          {
+            amount: '46',
+            address: 'myPqtRpy1Ay65U5RmwX5q2sjXqcjDRCyVx',
+          },
+        ],
+      },
+      {
+        receivers: [
+          {
+            amount: '1500',
+            address: 'myPqtRpy1Ay65U5RmwX5q2sjXqcjDRCyVx',
+          },
+        ],
+      },
+    ],
+    broadcast: false,
+  },
 ]
 
 export default cases

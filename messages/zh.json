@@ -12,6 +12,12 @@
     "getAddress": "查询地址",
     "getPublicKey": "查询公钥",
     "getBalance": "查询余额",
-    "transfer": "转账"
+    "transfer": "转账",
+
+    "encryption": "加密",
+    "eciesEncrypt": "ECIES加密",
+    "eciesDecrypt": "ECIES解密",
+    "broadcast": "广播",
+    "merge": "合并"
   }
 }
