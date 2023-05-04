@@ -115,23 +115,23 @@ const cases: {
   },
   {
     id: 6,
-    name: '6: 46ft+1500sats - testnet - broadcast',
+    name: '6: 1500sats+30ft - testnet - broadcast',
     tasks: [
+      {
+        receivers: [
+          {
+            amount: '1500',
+            address: 'mpe6Kvsm9LJoa24cRwfW5jLxY1jSq2oYZP',
+          },
+        ],
+      },
       {
         genesis: '039032ade3d49a6d4ff41c33b3d63ea5c986f310',
         codehash: 'a2421f1e90c6048c36745edd44fad682e8644693',
         receivers: [
           {
-            amount: '46',
-            address: 'myPqtRpy1Ay65U5RmwX5q2sjXqcjDRCyVx',
-          },
-        ],
-      },
-      {
-        receivers: [
-          {
-            amount: '1500',
-            address: 'myPqtRpy1Ay65U5RmwX5q2sjXqcjDRCyVx',
+            amount: '30',
+            address: 'mpe6Kvsm9LJoa24cRwfW5jLxY1jSq2oYZP',
           },
         ],
       },
@@ -210,14 +210,14 @@ const cases: {
 
   {
     id: 9,
-    name: '9: 1000sats+10TMUSDT - testnet - no broadcast',
+    name: '9: 1000sats+100TMUSDT - testnet - no broadcast',
     tasks: [
       {
         type: 'space',
         receivers: [
           {
             amount: '1000',
-            address: 'n1i5SitqN2Ejf6uWByGcMQgPnayxuqvs4t',
+            address: 'mpe6Kvsm9LJoa24cRwfW5jLxY1jSq2oYZP',
           },
         ],
       },
@@ -227,13 +227,41 @@ const cases: {
         codehash: 'a2421f1e90c6048c36745edd44fad682e8644693',
         receivers: [
           {
-            amount: '10',
-            address: 'n1i5SitqN2Ejf6uWByGcMQgPnayxuqvs4t',
+            amount: '100',
+            address: 'mpe6Kvsm9LJoa24cRwfW5jLxY1jSq2oYZP',
           },
         ],
       },
     ],
     broadcast: false,
+  },
+
+  {
+    id: 10,
+    name: '10: 1000sats+100TMUSDT - testnet - broadcast',
+    tasks: [
+      {
+        type: 'space',
+        receivers: [
+          {
+            amount: '1000',
+            address: 'mpe6Kvsm9LJoa24cRwfW5jLxY1jSq2oYZP',
+          },
+        ],
+      },
+      {
+        type: 'token',
+        genesis: '1739804f265e85826bdd1078f8c719a9e6f421d5',
+        codehash: 'a2421f1e90c6048c36745edd44fad682e8644693',
+        receivers: [
+          {
+            amount: '100',
+            address: 'mpe6Kvsm9LJoa24cRwfW5jLxY1jSq2oYZP',
+          },
+        ],
+      },
+    ],
+    broadcast: true,
   },
 ]
 
