@@ -14,10 +14,11 @@
     "getBalance": "GetBalance",
     "transfer": "Transfer",
 
-    "encryption": "Encryption",
+    "encryption": "Encryption & Signing",
     "eciesEncrypt": "ECIES Encrypt",
     "eciesDecrypt": "ECIES Decrypt",
     "broadcast": "Broadcast",
-    "merge": "Merge"
+    "merge": "Merge",
+    "signTransactions": "Sign Transactions"
   }
 }

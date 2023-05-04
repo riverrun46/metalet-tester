@@ -77,6 +77,18 @@ export default function Home() {
     })
   }
 
+  const callEciesDecrypt = async () => {
+    // hello world
+    await command('eciesDecrypt', {
+      encrypted:
+        '4249453102f09ef3517e9cea9e74b1a59588fe60f9b3afd3b5dd0b9343d36d945f004f0d08a6af2e608de2f40181e7aadd4edeb8021ca6cc1374f099e045741ee6fa01e77e8c5c41eb68f1f2c35e40b8741d0ab169',
+    })
+  }
+
+  const signTransactions = async () => {
+    await command('signTransactions', {})
+  }
+
   const tryBroadcast = async (rawTx: string) => {
     const res = await fetch('https://testnet.mvcapi.com/tx/broadcast', {
       method: 'POST',
@@ -158,8 +170,11 @@ export default function Home() {
             >
               {t('eciesEncrypt')}
             </button>
-            <button className="btn" onClick={() => command('eciesDecrypt')}>
+            <button className="btn" onClick={callEciesDecrypt}>
               {t('eciesDecrypt')}
+            </button>
+            <button className="btn" onClick={signTransactions}>
+              {t('signTransactions')}
             </button>
           </div>
 

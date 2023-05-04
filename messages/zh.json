@@ -14,10 +14,11 @@
     "getBalance": "查询余额",
     "transfer": "转账",
 
-    "encryption": "加密",
+    "encryption": "加密 / 签名",
     "eciesEncrypt": "ECIES加密",
     "eciesDecrypt": "ECIES解密",
     "broadcast": "广播",
-    "merge": "合并"
+    "merge": "合并",
+    "signTransactions": "签名交易"
   }
 }

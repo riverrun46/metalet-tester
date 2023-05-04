@@ -1,9 +1,10 @@
 type Receiver = {
-  amount: string
+  amount: string | number
   address: string
 }
 
 type Task = {
+  type?: 'space' | 'token'
   genesis?: string
   codehash?: string
   receivers: Receiver[]
@@ -200,6 +201,34 @@ const cases: {
           {
             amount: '1500',
             address: 'myPqtRpy1Ay65U5RmwX5q2sjXqcjDRCyVx',
+          },
+        ],
+      },
+    ],
+    broadcast: false,
+  },
+
+  {
+    id: 9,
+    name: '9: 1000sats+10TMUSDT - testnet - no broadcast',
+    tasks: [
+      {
+        type: 'space',
+        receivers: [
+          {
+            amount: '1000',
+            address: 'n1i5SitqN2Ejf6uWByGcMQgPnayxuqvs4t',
+          },
+        ],
+      },
+      {
+        type: 'token',
+        genesis: '1739804f265e85826bdd1078f8c719a9e6f421d5',
+        codehash: 'a2421f1e90c6048c36745edd44fad682e8644693',
+        receivers: [
+          {
+            amount: '10',
+            address: 'n1i5SitqN2Ejf6uWByGcMQgPnayxuqvs4t',
           },
         ],
       },
