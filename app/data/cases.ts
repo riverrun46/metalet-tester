@@ -210,14 +210,14 @@ const cases: {
 
   {
     id: 9,
-    name: '9: 1000sats+100TMUSDT - testnet - no broadcast',
+    name: '9: 1000sats+10000TMUSDT - testnet - no broadcast',
     tasks: [
       {
         type: 'space',
         receivers: [
           {
             amount: '1000',
-            address: 'mpe6Kvsm9LJoa24cRwfW5jLxY1jSq2oYZP',
+            address: 'mtoEiX2gtKKRsxBPa3oYARNc9bmVDseUxK',
           },
         ],
       },
@@ -227,8 +227,8 @@ const cases: {
         codehash: 'a2421f1e90c6048c36745edd44fad682e8644693',
         receivers: [
           {
-            amount: '100',
-            address: 'mpe6Kvsm9LJoa24cRwfW5jLxY1jSq2oYZP',
+            amount: '10000',
+            address: 'mtoEiX2gtKKRsxBPa3oYARNc9bmVDseUxK',
           },
         ],
       },
@@ -238,14 +238,14 @@ const cases: {
 
   {
     id: 10,
-    name: '10: 1000sats+100TMUSDT - testnet - broadcast',
+    name: '10: 1000sats+10000TMUSDT - testnet - broadcast',
     tasks: [
       {
         type: 'space',
         receivers: [
           {
             amount: '1000',
-            address: 'mpe6Kvsm9LJoa24cRwfW5jLxY1jSq2oYZP',
+            address: 'mtoEiX2gtKKRsxBPa3oYARNc9bmVDseUxK',
           },
         ],
       },
@@ -255,8 +255,8 @@ const cases: {
         codehash: 'a2421f1e90c6048c36745edd44fad682e8644693',
         receivers: [
           {
-            amount: '100',
-            address: 'mpe6Kvsm9LJoa24cRwfW5jLxY1jSq2oYZP',
+            amount: '10000',
+            address: 'mtoEiX2gtKKRsxBPa3oYARNc9bmVDseUxK',
           },
         ],
       },

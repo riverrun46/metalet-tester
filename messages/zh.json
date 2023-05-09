@@ -11,6 +11,7 @@
     "account": "账户信息",
     "getAddress": "查询地址",
     "getPublicKey": "查询公钥",
+    "getXPublicKey": "查询扩展公钥",
     "getBalance": "查询余额",
     "transfer": "转账",
 
@@ -19,6 +20,6 @@
     "eciesDecrypt": "ECIES解密",
     "broadcast": "广播",
     "merge": "合并",
-    "signTransactions": "签名交易"
+    "signTransaction": "签名交易"
   }
 }

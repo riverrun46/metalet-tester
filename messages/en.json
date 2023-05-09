@@ -11,6 +11,7 @@
     "account": "Account",
     "getAddress": "GetAddress",
     "getPublicKey": "GetPublicKey",
+    "getXPublicKey": "GetXPublicKey",
     "getBalance": "GetBalance",
     "transfer": "Transfer",
 
@@ -19,6 +20,6 @@
     "eciesDecrypt": "ECIES Decrypt",
     "broadcast": "Broadcast",
     "merge": "Merge",
-    "signTransactions": "Sign Transactions"
+    "signTransaction": "Sign Transaction"
   }
 }

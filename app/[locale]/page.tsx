@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useLocale, useTranslations } from 'next-intl'
 import Link from 'next/link'
+import mvc from 'mvc-std-lib'
 
 import cases from '@/app/data/cases'
 
@@ -25,7 +26,6 @@ export default function Home() {
     const name = t(cmd)
     const newMessage = locale === 'en' ? `> ${name}...` : `> ${name}中……`
     setConsoleMessages((prev) => [...prev, newMessage])
-    console.log({ params })
     const res = await wallet[cmd](params)
     console.log({ res })
 
@@ -66,6 +66,8 @@ export default function Home() {
     if (consoleEl) {
       consoleEl.scrollTop = consoleEl.scrollHeight
     }
+
+    return res
   }
 
   const transfer = async ({ caseIndex }: { caseIndex: number }) => {
@@ -85,8 +87,14 @@ export default function Home() {
     })
   }
 
-  const signTransactions = async () => {
-    await command('signTransactions', {})
+  const signTransaction = async () => {
+    // 先创建一个交易
+    const tx = new mvc.Transaction()
+
+    const address = await command('getAddress')
+    console.log({ address })
+    // txComposer.appendP2PKHInput()
+    // await command('signTransaction', {})
   }
 
   const tryBroadcast = async (rawTx: string) => {
@@ -147,8 +155,11 @@ export default function Home() {
             <button className="btn" onClick={() => command('getAddress')}>
               {t('getAddress')}
             </button>
-            <button className="btn muted" disabled>
+            <button className="btn" onClick={() => command('getPublicKey')}>
               {t('getPublicKey')}
+            </button>
+            <button className="btn" onClick={() => command('getXPublicKey')}>
+              {t('getXPublicKey')}
             </button>
             <button className="btn" onClick={() => command('getBalance')}>
               {t('getBalance')}
@@ -173,8 +184,8 @@ export default function Home() {
             <button className="btn" onClick={callEciesDecrypt}>
               {t('eciesDecrypt')}
             </button>
-            <button className="btn" onClick={signTransactions}>
-              {t('signTransactions')}
+            <button className="btn" onClick={signTransaction}>
+              {t('signTransaction')}
             </button>
           </div>
 
