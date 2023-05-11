@@ -123,7 +123,7 @@ export default function Home() {
       }),
     )
 
-    const unlockSize = tx.inputs.filter((v) => v.output!.script.isPublicKeyHashOut()).length * 107
+    const unlockSize = tx.inputs.filter((v: any) => v.output!.script.isPublicKeyHashOut()).length * 107
     let fee = Math.ceil(tx.toBuffer().length + unlockSize + 62)
 
     let changeAmount = getUnspentValue(tx) - fee
