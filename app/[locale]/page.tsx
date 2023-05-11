@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useLocale, useTranslations } from 'next-intl'
 import Link from 'next/link'
+// @ts-ignore
 import mvc from 'mvc-lib'
 
 import cases from '@/app/data/cases'
