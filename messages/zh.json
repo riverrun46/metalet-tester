@@ -20,6 +20,10 @@
     "eciesDecrypt": "ECIES解密",
     "broadcast": "广播",
     "merge": "合并",
-    "signTransaction": "签名交易"
+    "signTransaction": "签名交易",
+
+    "createPsbt": "创建PSBT",
+    "requestAccounts": "请求账户",
+    "signPsbt": "签名PSBT"
   }
 }

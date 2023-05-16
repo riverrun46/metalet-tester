@@ -20,6 +20,10 @@
     "eciesDecrypt": "ECIES Decrypt",
     "broadcast": "Broadcast",
     "merge": "Merge",
-    "signTransaction": "Sign Transaction"
+    "signTransaction": "Sign Transaction",
+
+    "createPsbt": "Create PSBT",
+    "requestAccounts": "Request Accounts",
+    "signPsbt": "签名PSBT"
   }
 }

@@ -2,4 +2,5 @@
 
 interface Window {
   metaidwallet: any
+  unisat: any
 }

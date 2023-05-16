@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from 'next-intl'
 import Link from 'next/link'
 // @ts-ignore
 import mvc from 'mvc-lib'
+import * as bitcoinjs from 'bitcoinjs-lib'
 
 import cases from '@/app/data/cases'
 
@@ -15,8 +16,10 @@ export default function Home() {
   const theOtherPath = locale === 'en' ? '/zh' : '/en'
 
   const [wallet, setWallet] = useState<any | null>(null)
+  const [network, setNetwork] = useState<string>('testnet')
+
   useEffect(() => {
-    setWallet(window.metaidwallet)
+    setWallet(window.unisat)
   }, [])
 
   const [consoleMessages, setConsoleMessages] = useState<string[]>([])
@@ -194,7 +197,61 @@ export default function Home() {
     }
   }
 
-  const [showTransfer, setShowTransfer] = useState(true)
+  const createPsbt = async () => {
+    const secp256k1 = await import('tiny-secp256k1')
+    bitcoinjs.initEccLib(secp256k1)
+    setConsoleMessages((prev) => [...prev, '> 创建 PSBT……'])
+
+    // 获取地址
+    const [address] = await command('requestAccounts')
+
+    // 查询 UTXO
+    const url = `https://unisat.io/testnet/api/v3/address/btc-utxo?address=${address}`
+    const oneUtxo = await fetch(url)
+      .then((res) => res.json())
+      .then(({ result }) => result[0])
+    setConsoleMessages((prev) => [...prev, '> 获取首个UTXO……'])
+    setConsoleMessages((prev) => [...prev, JSON.stringify(oneUtxo)])
+
+    // 查询生交易
+    const rawTxUrl = `https://mempool.space/testnet/api/tx/${oneUtxo.txId}/hex`
+    const rawTx = await fetch(rawTxUrl).then((res) => res.text())
+    console.log({ rawTx })
+    setConsoleMessages((prev) => [...prev, '> 获取前置rawTx……'])
+    setConsoleMessages((prev) => [...prev, rawTx])
+
+    // 解析生交易
+    const tx = bitcoinjs.Transaction.fromHex(rawTx)
+    const oneUtxoDetail = tx.outs[oneUtxo.outputIndex]
+
+    // 构建psbt
+    const psbt = new bitcoinjs.Psbt({ network: bitcoinjs.networks.testnet })
+
+    // 构建输入
+    const input = {
+      hash: oneUtxo.txId,
+      index: oneUtxo.outputIndex,
+      nonWitnessUtxo: tx.toBuffer(),
+      witnessUtxo: tx.outs[oneUtxo.outputIndex],
+      sighashType: bitcoinjs.Transaction.SIGHASH_SINGLE | bitcoinjs.Transaction.SIGHASH_ANYONECANPAY,
+    }
+    psbt.addInput(input)
+
+    // 构建输出
+    const output = {
+      address,
+      value: 1000,
+    }
+    psbt.addOutput(output)
+
+    const hexed = psbt.toHex()
+    setConsoleMessages((prev) => [...prev, '> 构建 PSBT……'])
+    setConsoleMessages((prev) => [...prev, hexed])
+
+    // 请求签名
+    const signed = await command('signPsbt', hexed)
+    console.log({ signed })
+  }
 
   return (
     <main className="flex min-h-screen items-center justify-center">
@@ -203,7 +260,7 @@ export default function Home() {
         <div className="col-span-1 overflow-y-auto px-4 pb-4">
           <h3 className="title col-span-3">{t('connect')}</h3>
           <div className="mt-4 grid grid-cols-3 gap-4">
-            <button className="btn" onClick={() => command('connect')}>
+            <button className="btn" onClick={() => command('requestAccounts')}>
               {t('connect')}
             </button>
             <button className="btn" onClick={() => command('disconnect')}>
@@ -215,7 +272,7 @@ export default function Home() {
             <button className="btn" onClick={() => command('getNetwork')}>
               {t('getNetwork')}
             </button>
-            <button className="btn" onClick={() => command('switchNetwork')}>
+            <button className="btn" onClick={() => command('switchNetwork', 'testnet')}>
               {t('switchNetwork')}
             </button>
           </div>
@@ -265,29 +322,12 @@ export default function Home() {
             </button>
           </div>
 
-          <h3 className="title col-span-3 mt-8 flex items-center justify-between">
-            <span>{t('transfer')}</span>
-            <button
-              className="rounded-full text-xs text-gray-500 py-1 px-4 mor-shadow-sm font-medium"
-              onClick={() => setShowTransfer((prev) => !prev)}
-            >
-              {showTransfer ? t('collapse') : t('expand')}
+          <h3 className="title col-span-3 mt-8">PSBT</h3>
+          <div className="mt-4 grid grid-cols-3 gap-4">
+            <button className="btn" onClick={createPsbt}>
+              {t('createPsbt')}
             </button>
-          </h3>
-          {showTransfer && (
-            <div className="mt-4 grid grid-cols-2 gap-4">
-              {cases.map((c, i) => (
-                <button
-                  className={`btn col-span-1 !text-xs p-2 h-20 !rounded-2xl break-all ${c.disabled && 'muted'}`}
-                  disabled={c.disabled}
-                  key={i}
-                  onClick={() => transfer({ caseIndex: i })}
-                >
-                  {c.name}
-                </button>
-              ))}
-            </div>
-          )}
+          </div>
         </div>
 
         <div className="col-span-1 flex flex-col overflow-y-hidden">
