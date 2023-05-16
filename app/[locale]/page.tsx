@@ -237,7 +237,7 @@ export default function Home() {
     }
     psbt.addInput(input)
 
-    // 构建输出
+    // 构建输出 123
     const output = {
       address,
       value: 1000,
