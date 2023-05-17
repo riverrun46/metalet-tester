@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useLocale, useTranslations } from 'next-intl'
 import Link from 'next/link'
+import { kv } from '@vercel/kv'
 // @ts-ignore
 import mvc from 'mvc-lib'
 import * as bitcoinjs from 'bitcoinjs-lib'
@@ -237,7 +238,7 @@ export default function Home() {
     }
     psbt.addInput(input)
 
-    // 构建输出 123
+    // 构建输出
     const output = {
       address,
       value: 1000,
@@ -251,6 +252,18 @@ export default function Home() {
     // 请求签名
     const signed = await command('signPsbt', hexed)
     console.log({ signed })
+
+    // 请求本项目/api/psbts POST接口
+    const res = await fetch('/api/psbts', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        txHex: signed,
+      }),
+    }).then((res) => res.json())
+    console.log({ res })
   }
 
   return (
