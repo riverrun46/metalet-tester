@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react'
 import { useLocale, useTranslations } from 'next-intl'
 import Link from 'next/link'
-import { kv } from '@vercel/kv'
 // @ts-ignore
 import mvc from 'mvc-lib'
 import * as bitcoinjs from 'bitcoinjs-lib'
