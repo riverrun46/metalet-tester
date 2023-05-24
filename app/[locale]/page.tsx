@@ -6,6 +6,7 @@ import Link from 'next/link'
 // @ts-ignore
 import mvc from 'mvc-lib'
 import * as bitcoinjs from 'bitcoinjs-lib'
+import * as psbtUtil from 'bitcoinjs-lib/src/psbt/psbtutils'
 
 import cases from '@/app/data/cases'
 
@@ -206,10 +207,25 @@ export default function Home() {
     const [address] = await command('requestAccounts')
 
     // 查询 UTXO
-    const url = `https://unisat.io/testnet/api/v3/address/btc-utxo?address=${address}`
-    const oneUtxo = await fetch(url)
+    const url = `https://unisat.io/testnet/wallet-api-v4/address/btc-utxo?address=${address}`
+    const oneUtxo = await fetch(url, {
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Client': 'UniSat Wallet',
+      },
+    })
       .then((res) => res.json())
-      .then(({ result }) => result[0])
+      .then(({ result }) => {
+        // utxo中最小的一个
+        const minUtxo = result.reduce((prev: any, curr: any) => {
+          if (prev.satoshis < curr.satoshis) {
+            return prev
+          }
+          return curr
+        })
+
+        return minUtxo
+      })
     setConsoleMessages((prev) => [...prev, '> 获取首个UTXO……'])
     setConsoleMessages((prev) => [...prev, JSON.stringify(oneUtxo)])
 
@@ -227,20 +243,34 @@ export default function Home() {
     // 构建psbt
     const psbt = new bitcoinjs.Psbt({ network: bitcoinjs.networks.testnet })
 
+    console.log({ tx, oneUtxo })
+    for (const output in tx.outs) {
+      try {
+        tx.setWitness(parseInt(output), [])
+      } catch (e: any) {}
+    }
+
     // 构建输入
-    const input = {
+    const input: any = {
       hash: oneUtxo.txId,
       index: oneUtxo.outputIndex,
       nonWitnessUtxo: tx.toBuffer(),
       witnessUtxo: tx.outs[oneUtxo.outputIndex],
       sighashType: bitcoinjs.Transaction.SIGHASH_SINGLE | bitcoinjs.Transaction.SIGHASH_ANYONECANPAY,
     }
+
+    // const toXOnly = (pubKey: any) => (pubKey.length === 32 ? pubKey : pubKey.slice(1, 33))
+    // const pk = await command('getPublicKey')
+    // const tap = toXOnly(tx.toBuffer().constructor(pk, 'hex'))
+    // input.tapInternalKey = tap
+    // console.log({ input, tap })
+
     psbt.addInput(input)
 
     // 构建输出
     const output = {
       address,
-      value: 1000,
+      value: oneUtxo.satoshis + 2000,
     }
     psbt.addOutput(output)
 
@@ -250,20 +280,25 @@ export default function Home() {
 
     // 请求签名
     const signed = await command('signPsbt', hexed)
-    console.log({ signed })
 
     // 请求本项目/api/psbts POST接口
-    const res = await fetch('/api/psbts', {
+    const res = await fetch('/api/ask-psbts', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        txHex: signed,
+        psbtRaw: signed,
+        address,
+        orderState: 1,
+        orderType: 1,
+        tick: 'ordi',
       }),
     }).then((res) => res.json())
     console.log({ res })
   }
+
+  const createTx = async () => {}
 
   return (
     <main className="flex min-h-screen items-center justify-center">
@@ -339,6 +374,10 @@ export default function Home() {
             <button className="btn" onClick={createPsbt}>
               {t('createPsbt')}
             </button>
+
+            <button className="btn" onClick={createTx}>
+              创建普通交易
+            </button>
           </div>
         </div>
 
@@ -380,7 +419,10 @@ export default function Home() {
           {/* 控制台 */}
           <div className="mor-inner rounded-xl p-4 text-gray-400 text-sm overflow-y-scroll mt-4 grow" id="console">
             {consoleMessages.map((msg, i) => (
-              <p key={i} className={msg.startsWith('>') ? 'text-gray-400 mt-4 break-all' : 'break-all text-indigo-700'}>
+              <p
+                key={i}
+                className={msg?.startsWith('>') ? 'text-gray-400 mt-4 break-all' : 'break-all text-indigo-700'}
+              >
                 {msg}
               </p>
             ))}
