@@ -268,9 +268,10 @@ export default function Home() {
     psbt.addInput(input)
 
     // 构建输出
+    const total = oneUtxo.satoshis + 2000
     const output = {
       address,
-      value: oneUtxo.satoshis + 2000,
+      value: total,
     }
     psbt.addOutput(output)
 
@@ -293,6 +294,7 @@ export default function Home() {
         orderState: 1,
         orderType: 1,
         tick: 'ordi',
+        total,
       }),
     }).then((res) => res.json())
     console.log({ res })
