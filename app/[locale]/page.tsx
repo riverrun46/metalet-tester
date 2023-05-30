@@ -283,7 +283,11 @@ export default function Home() {
     const signed = await command('signPsbt', hexed)
 
     // 请求本项目/api/psbts POST接口
-    const res = await fetch('/api/ask-psbts', {
+    // const postEndpoint = '/api/psbts'
+    const postEndpoint = 'https://api.ordbook.io/book/brc20/order/push'
+    // coinAmount在 1到50之间取随机数
+    const coinAmount = Math.floor(Math.random() * 50) + 1
+    const res = await fetch(postEndpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -293,8 +297,9 @@ export default function Home() {
         address,
         orderState: 1,
         orderType: 1,
+        net: 'testnet',
         tick: 'ordi',
-        total,
+        coinAmount,
       }),
     }).then((res) => res.json())
     console.log({ res })
