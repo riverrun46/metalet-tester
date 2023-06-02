@@ -1,8 +1,12 @@
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const txId = searchParams.get('id')
+  const network = searchParams.get('network') || 'testnet'
 
-  const url = `https://mempool.space/testnet/api/tx/${txId}/hex`
+  const url =
+    network === 'testnet'
+      ? `https://mempool.space/testnet/api/tx/${txId}/hex`
+      : `https://mempool.space/api/tx/${txId}/hex`
   const txHex: string = await fetch(url, {
     headers: {
       'Content-Type': 'application/json',

@@ -1,6 +1,8 @@
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const address = searchParams.get('address')
+  const network = searchParams.get('network') || 'testnet'
+
   if (!address) {
     return new Response('address is required', { status: 400 })
   }
@@ -13,7 +15,10 @@ export async function GET(request: Request) {
     outputIndex: number
     addressType: number
   }
-  const url = `https://unisat.io/testnet/wallet-api-v4/address/btc-utxo?address=${address}`
+  const url =
+    network === 'testnet'
+      ? `https://unisat.io/testnet/wallet-api-v4/address/btc-utxo?address=${address}`
+      : `https://unisat.io/wallet-api-v4/address/btc-utxo?address=${address}`
   const res: any = await fetch(url, {
     headers: {
       'Content-Type': 'application/json',

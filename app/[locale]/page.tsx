@@ -268,7 +268,7 @@ export default function Home() {
     psbt.addInput(input)
 
     // 构建输出
-    const total = oneUtxo.satoshis + 2000
+    const total = oneUtxo.satoshis - 2000
     const output = {
       address,
       value: total,
