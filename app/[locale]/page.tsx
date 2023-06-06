@@ -199,38 +199,82 @@ export default function Home() {
   }
 
   const createPsbt = async () => {
+    const network = await window.unisat.getNetwork()
+    const btcNetwork = network === 'testnet' ? bitcoinjs.networks.testnet : bitcoinjs.networks.bitcoin
+
     const secp256k1 = await import('tiny-secp256k1')
     bitcoinjs.initEccLib(secp256k1)
     setConsoleMessages((prev) => [...prev, '> 创建 PSBT……'])
 
     // 获取地址
     const [address] = await command('requestAccounts')
+    const tick = 'ORXC'
 
     // 查询 UTXO
-    const url = `https://unisat.io/testnet/wallet-api-v4/address/btc-utxo?address=${address}`
-    const oneUtxo = await fetch(url, {
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Client': 'UniSat Wallet',
-      },
-    })
-      .then((res) => res.json())
-      .then(({ result }) => {
-        // utxo中最小的一个
-        const minUtxo = result.reduce((prev: any, curr: any) => {
-          if (prev.satoshis < curr.satoshis) {
-            return prev
+    let oneUtxo: {
+      txId: string
+      outputIndex: number
+      satoshis: number
+    }
+    if (network === 'testnet') {
+      const url = `https://unisat.io/testnet/wallet-api-v4/address/btc-utxo?address=${address}`
+      oneUtxo = await fetch(url, {
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Client': 'UniSat Wallet',
+        },
+      })
+        .then((res) => res.json())
+        .then(({ result }) => {
+          // utxo中最小的一个
+          const minUtxo = result.reduce((prev: any, curr: any) => {
+            if (prev.satoshis < curr.satoshis) {
+              return prev
+            }
+            return curr
+          })
+
+          return minUtxo
+        })
+      setConsoleMessages((prev) => [...prev, '> 获取首个UTXO……'])
+      setConsoleMessages((prev) => [...prev, JSON.stringify(oneUtxo)])
+    } else {
+      // 主网，拿真正的brc20
+
+      const url = `https://api.ordbook.io/book/brc20/address/${address}/${tick}`
+      oneUtxo = await fetch(url, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+        .then((res) => res.json())
+        .then(({ data }) => {
+          // 第一个有效的brc20
+          console.log(data)
+          const inscriptions = data.transferBalanceList
+          const firstBrc20 = inscriptions[0]
+          const firstBrc20Id = firstBrc20.inscriptionId
+
+          // txid为截取掉后面的‘i0’
+          const brc20TxId = firstBrc20Id.slice(0, -2)
+          console.log({ brc20TxId })
+
+          return {
+            txId: brc20TxId,
+            outputIndex: 0,
+            satoshis: 546,
           }
-          return curr
         })
 
-        return minUtxo
-      })
-    setConsoleMessages((prev) => [...prev, '> 获取首个UTXO……'])
-    setConsoleMessages((prev) => [...prev, JSON.stringify(oneUtxo)])
+      setConsoleMessages((prev) => [...prev, '> 获取BRC20……'])
+      setConsoleMessages((prev) => [...prev, JSON.stringify(oneUtxo)])
+    }
 
     // 查询生交易
-    const rawTxUrl = `https://mempool.space/testnet/api/tx/${oneUtxo.txId}/hex`
+    const rawTxUrl =
+      network === 'testnet'
+        ? `https://mempool.space/testnet/api/tx/${oneUtxo.txId}/hex`
+        : `https://mempool.space/api/tx/${oneUtxo.txId}/hex`
     const rawTx = await fetch(rawTxUrl).then((res) => res.text())
     console.log({ rawTx })
     setConsoleMessages((prev) => [...prev, '> 获取前置rawTx……'])
@@ -241,7 +285,7 @@ export default function Home() {
     const oneUtxoDetail = tx.outs[oneUtxo.outputIndex]
 
     // 构建psbt
-    const psbt = new bitcoinjs.Psbt({ network: bitcoinjs.networks.testnet })
+    const psbt = new bitcoinjs.Psbt({ network: btcNetwork })
 
     console.log({ tx, oneUtxo })
     for (const output in tx.outs) {
@@ -268,7 +312,7 @@ export default function Home() {
     psbt.addInput(input)
 
     // 构建输出
-    const total = oneUtxo.satoshis - 2000
+    const total = 2000
     const output = {
       address,
       value: total,
@@ -297,8 +341,8 @@ export default function Home() {
         address,
         orderState: 1,
         orderType: 1,
-        net: 'testnet',
-        tick: 'ordi',
+        net: network,
+        tick,
         coinAmount,
       }),
     }).then((res) => res.json())
