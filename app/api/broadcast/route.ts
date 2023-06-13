@@ -14,10 +14,10 @@ export async function POST(request: Request) {
       'Content-Type': 'plain/text',
     },
     body: rawTx,
-  }).then(async (res) => await res.text())
+  })
 
   if (res.status === 400) {
-    return new Response(res, {
+    return new Response(await res.text(), {
       headers: {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
@@ -27,7 +27,7 @@ export async function POST(request: Request) {
     })
   }
 
-  return new Response(res, {
+  return new Response(await res.text(), {
     headers: {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
