@@ -11,10 +11,21 @@ export async function POST(request: Request) {
   const res: any = await fetch(url, {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/json',
+      'Content-Type': 'plain/text',
     },
     body: rawTx,
-  }).then((res) => res.json())
+  }).then((res) => res)
+
+  if (res.status === 400) {
+    return new Response(await res.text(), {
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      },
+      status: 400,
+    })
+  }
 
   return new Response(JSON.stringify(res), {
     headers: {
