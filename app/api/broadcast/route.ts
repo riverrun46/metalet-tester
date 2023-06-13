@@ -8,16 +8,16 @@ export async function POST(request: Request) {
   }
 
   const url = network === 'testnet' ? `https://mempool.space/testnet/api/tx` : `https://mempool.space/api/tx`
-  const res: any = await fetch(url, {
+  const res = await fetch(url, {
     method: 'POST',
     headers: {
       'Content-Type': 'plain/text',
     },
     body: rawTx,
-  }).then((res) => res)
+  }).then(async (res) => await res.text())
 
   if (res.status === 400) {
-    return new Response(await res.text(), {
+    return new Response(res, {
       headers: {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
@@ -27,7 +27,7 @@ export async function POST(request: Request) {
     })
   }
 
-  return new Response(JSON.stringify(res), {
+  return new Response(res, {
     headers: {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
