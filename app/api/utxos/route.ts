@@ -23,6 +23,8 @@ export async function GET(request: Request) {
     headers: {
       'Content-Type': 'application/json',
       'X-Client': 'UniSat Wallet',
+      'User-Agent':
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36',
     },
   }).then((res) => res.json())
 
