@@ -1,7 +1,7 @@
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const txId = searchParams.get('id')
-  const network = searchParams.get('network') || 'testnet'
+  const network = searchParams.get('network') || 'livenet'
 
   const url =
     network === 'testnet'
