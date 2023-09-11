@@ -6,14 +6,6 @@ export async function GET(request: Request) {
     return new Response('address is required', { status: 400 })
   }
 
-  // proxy to unisat.io
-  type SimpleUtxo = {
-    txId: string
-    scriptPk: string
-    satoshis: number
-    outputIndex: number
-    addressType: number
-  }
   const url = `https://unisat.io/wallet-api-v4/address/balance?address=${address}`
   const res: any = await fetch(url, {
     headers: {
@@ -24,7 +16,16 @@ export async function GET(request: Request) {
     },
   })
     .then((res) => res.json())
-    .then((res) => res.result.btc_amount)
+    .then(({ result }) => {
+      // decimal string to number
+      const unconfirmed = Number(result.pending_btc_amount) * 1e8
+      const confirmed = Number(result.confirm_btc_amount) * 1e8
+      return {
+        address,
+        unconfirmed,
+        confirmed,
+      }
+    })
 
   return new Response(JSON.stringify(res), {
     headers: {
