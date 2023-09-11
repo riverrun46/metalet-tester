@@ -263,6 +263,9 @@ export default function Home() {
             <button className="btn" onClick={signTransaction}>
               {t('signTransaction')}
             </button>
+            <button className="btn" onClick={() => command('signMessage', { message: 'Hello World' })}>
+              {t('signMessage')}
+            </button>
           </div>
 
           <h3 className="title col-span-3 mt-8 flex items-center justify-between">

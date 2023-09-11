@@ -20,6 +20,7 @@
     "eciesDecrypt": "ECIES Decrypt",
     "broadcast": "Broadcast",
     "merge": "Merge",
-    "signTransaction": "Sign Transaction"
+    "signTransaction": "Sign Transaction",
+    "signMessage": "Sign Message"
   }
 }
