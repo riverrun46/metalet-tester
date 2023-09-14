@@ -1,7 +1,7 @@
 export async function POST(request: Request) {
   const requestJson = await request.json()
   const rawTx = requestJson.rawTx
-  const network = requestJson.network || 'testnet'
+  const network = requestJson.network || 'livenet'
 
   if (!rawTx) {
     return new Response('rawTx is required', { status: 400 })

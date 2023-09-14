@@ -1,24 +1,12 @@
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const address = searchParams.get('address')
-  const network = searchParams.get('network') || 'livenet'
 
   if (!address) {
     return new Response('address is required', { status: 400 })
   }
 
-  // proxy to unisat.io
-  type SimpleUtxo = {
-    txId: string
-    scriptPk: string
-    satoshis: number
-    outputIndex: number
-    addressType: number
-  }
-  const url =
-    network === 'testnet'
-      ? `https://unisat.io/testnet/wallet-api-v4/address/btc-utxo?address=${address}`
-      : `https://unisat.io/wallet-api-v4/address/btc-utxo?address=${address}`
+  const url = `https://unisat.io/wallet-api-v4/address/balance?address=${address}`
   const res: any = await fetch(url, {
     headers: {
       'Content-Type': 'application/json',
@@ -26,7 +14,18 @@ export async function GET(request: Request) {
       'User-Agent':
         'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36',
     },
-  }).then((res) => res.json())
+  })
+    .then((res) => res.json())
+    .then(({ result }) => {
+      // decimal string to number
+      const unconfirmed = Number(result.pending_btc_amount) * 1e8
+      const confirmed = Number(result.confirm_btc_amount) * 1e8
+      return {
+        address,
+        unconfirmed,
+        confirmed,
+      }
+    })
 
   return new Response(JSON.stringify(res), {
     headers: {

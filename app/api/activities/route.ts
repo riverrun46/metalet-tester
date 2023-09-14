@@ -7,26 +7,17 @@ export async function GET(request: Request) {
     return new Response('address is required', { status: 400 })
   }
 
-  // proxy to unisat.io
-  type SimpleUtxo = {
-    txId: string
-    scriptPk: string
-    satoshis: number
-    outputIndex: number
-    addressType: number
-  }
   const url =
     network === 'testnet'
-      ? `https://unisat.io/testnet/wallet-api-v4/address/btc-utxo?address=${address}`
-      : `https://unisat.io/wallet-api-v4/address/btc-utxo?address=${address}`
+      ? `https://mempool.space/testnet/api/address/${address}/txs`
+      : `https://mempool.space/api/address/${address}/txs`
   const res: any = await fetch(url, {
     headers: {
       'Content-Type': 'application/json',
-      'X-Client': 'UniSat Wallet',
-      'User-Agent':
-        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36',
     },
   }).then((res) => res.json())
+
+  console.log({ res })
 
   return new Response(JSON.stringify(res), {
     headers: {
