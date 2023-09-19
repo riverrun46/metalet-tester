@@ -13,13 +13,16 @@
     "getPublicKey": "查询公钥",
     "getXPublicKey": "查询扩展公钥",
     "getBalance": "查询余额",
+    "getUtxos": "查询UTXO集",
     "transfer": "转账",
 
     "encryption": "加密 / 签名",
     "eciesEncrypt": "ECIES加密",
     "eciesDecrypt": "ECIES解密",
     "broadcast": "广播",
+    "clearTx": "清除交易",
     "merge": "合并",
+    "previewTransaction": "预览交易",
     "signTransaction": "签名交易",
     "signTransactions": "签名多个交易",
     "signMessage": "签名消息"

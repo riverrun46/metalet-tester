@@ -46,14 +46,23 @@ export default function Home() {
     }
 
     // 处理结果类型
-    if (typeof res === 'object') {
-      const resStr = JSON.stringify(res)
+    await printMessage(res)
+
+    return res
+  }
+
+  const printMessage = async (msg: object | boolean | string) => {
+    if (typeof msg === 'undefined') return
+
+    // 处理结果类型
+    if (typeof msg === 'object') {
+      const resStr = JSON.stringify(msg)
       setConsoleMessages((prev) => [...prev, resStr])
-    } else if (typeof res === 'boolean') {
-      const resStr = res ? 'OK' : 'FALSE'
+    } else if (typeof msg === 'boolean') {
+      const resStr = msg ? 'OK' : 'FALSE'
       setConsoleMessages((prev) => [...prev, resStr])
     } else {
-      setConsoleMessages((prev) => [...prev, res])
+      setConsoleMessages((prev) => [...prev, msg])
     }
 
     // 控制台滚动到底部
@@ -67,8 +76,6 @@ export default function Home() {
     if (consoleEl) {
       consoleEl.scrollTop = consoleEl.scrollHeight
     }
-
-    return res
   }
 
   const transfer = async ({ caseIndex }: { caseIndex: number }) => {
@@ -88,7 +95,7 @@ export default function Home() {
     })
   }
 
-  const signTransaction = async () => {
+  const createFirstTransaction = async () => {
     function getUnspentValue(tx: any) {
       const inputAmount = tx.inputs.reduce((pre: number, cur: any) => cur.output.satoshis + pre, 0)
       const outputAmount = tx.outputs.reduce((pre: number, cur: any) => cur.satoshis + pre, 0)
@@ -98,27 +105,42 @@ export default function Home() {
     }
     // 先创建一个交易
     const tx = new mvc.Transaction()
-    const utxo = {
-      satoshis: 95786164,
-      address: new mvc.Address('myPqtRpy1Ay65U5RmwX5q2sjXqcjDRCyVx', 'testnet'),
-      txId: '4d6a25d47e35e7c2c0fa1d2019972a3157185c689eb77bdf7abcb2ac5bb71dcc',
-      outputIndex: 1,
-    }
+    const address = await command('getAddress')
+    const { network } = await command('getNetwork')
+
+    const utxo: {
+      address: string
+      txid: string
+      outIndex: number
+      value: number
+    } = await command('getUtxos').then((utxos) => {
+      // 返回最大的一个utxo
+      const maxUtxo = utxos.reduce((prev: any, cur: any) => {
+        if (cur.satoshis > prev.satoshis) {
+          return cur
+        } else {
+          return prev
+        }
+      })
+
+      return maxUtxo
+    })
+
     const outputScript = mvc.Script.buildPublicKeyHashOut(utxo.address)
     // @ts-ignore
     const input = new mvc.Transaction.Input.PublicKeyHash({
       output: new mvc.Transaction.Output({
         script: outputScript,
-        satoshis: utxo.satoshis,
+        satoshis: utxo.value,
       }),
-      prevTxId: utxo.txId,
-      outputIndex: utxo.outputIndex,
+      prevTxId: utxo.txid,
+      outputIndex: utxo.outIndex,
       script: mvc.Script.empty(),
     })
     tx.addInput(input)
     tx.addOutput(
       new mvc.Transaction.Output({
-        script: new mvc.Script(new mvc.Address('myPqtRpy1Ay65U5RmwX5q2sjXqcjDRCyVx', 'testnet')),
+        script: new mvc.Script(new mvc.Address(address, network)),
         satoshis: 1000,
       }),
     )
@@ -127,39 +149,42 @@ export default function Home() {
     let fee = Math.ceil(tx.toBuffer().length + unlockSize + 62)
 
     let changeAmount = getUnspentValue(tx) - fee
-    if (changeAmount >= 1) {
+    if (changeAmount >= 546) {
       tx.addOutput(
         new mvc.Transaction.Output({
-          script: new mvc.Script(new mvc.Address('myPqtRpy1Ay65U5RmwX5q2sjXqcjDRCyVx', 'testnet')),
+          script: new mvc.Script(new mvc.Address(address, network)),
           satoshis: changeAmount,
         }),
       )
     }
 
+    return {
+      tx,
+      address,
+      outputScript,
+      utxo,
+    }
+  }
+
+  const signTransaction = async () => {
+    const { tx, address, outputScript, utxo } = await createFirstTransaction()
+
     // 签名
     const { signature: signatureInfo } = await command('signTransaction', {
       transaction: {
         txHex: tx.toString(),
-        address: 'myPqtRpy1Ay65U5RmwX5q2sjXqcjDRCyVx',
+        address,
         inputIndex: 0,
         scriptHex: outputScript.toHex(),
-        satoshis: 95786164,
+        satoshis: utxo.value,
       },
     })
 
     const pureSig = mvc.crypto.Signature.fromTxFormat(Buffer.from(signatureInfo.sig, 'hex'))
-    const txSignature = mvc.Transaction.Signature.fromObject({
-      publicKey: signatureInfo.publicKey,
-      prevTxId: tx.inputs[0].prevTxId,
-      outputIndex: tx.inputs[0].outputIndex,
-      inputIndex: 0,
-      signature: pureSig,
-      sigtype: signatureInfo.sigtype,
-    })
     const signedScript = mvc.Script.buildPublicKeyHashIn(
-      txSignature.publicKey,
-      txSignature.signature.toDER(),
-      txSignature.sigtype,
+      signatureInfo.publicKey,
+      pureSig.toDER(),
+      signatureInfo.sigtype,
     )
     tx.inputs[0].setScript(signedScript)
 
@@ -167,64 +192,54 @@ export default function Home() {
     setRawTxs((prev) => [...prev, tx.toString()])
   }
 
-  const signTransactions = async () => {
-    function getUnspentValue(tx: any) {
-      const inputAmount = tx.inputs.reduce((pre: number, cur: any) => cur.output.satoshis + pre, 0)
-      const outputAmount = tx.outputs.reduce((pre: number, cur: any) => cur.satoshis + pre, 0)
+  const previewTransaction = async () => {
+    const { tx, address, outputScript, utxo } = await createFirstTransaction()
 
-      let unspentAmount = inputAmount - outputAmount
-      return unspentAmount
-    }
-    // 先创建一个交易
-    const tx = new mvc.Transaction()
-    const utxo = {
-      satoshis: 95786164,
-      address: new mvc.Address('myPqtRpy1Ay65U5RmwX5q2sjXqcjDRCyVx', 'testnet'),
-      txId: '4d6a25d47e35e7c2c0fa1d2019972a3157185c689eb77bdf7abcb2ac5bb71dcc',
-      outputIndex: 1,
-    }
-    const outputScript = mvc.Script.buildPublicKeyHashOut(utxo.address)
-    // @ts-ignore
-    const input = new mvc.Transaction.Input.PublicKeyHash({
-      output: new mvc.Transaction.Output({
-        script: outputScript,
-        satoshis: utxo.satoshis,
-      }),
-      prevTxId: utxo.txId,
-      outputIndex: utxo.outputIndex,
-      script: mvc.Script.empty(),
-    })
-    tx.addInput(input)
-    tx.addOutput(
-      new mvc.Transaction.Output({
-        script: new mvc.Script(new mvc.Address('myPqtRpy1Ay65U5RmwX5q2sjXqcjDRCyVx', 'testnet')),
-        satoshis: 1000,
-      }),
-    )
+    await printMessage('> txid presigned:')
+    await printMessage(tx.id)
 
-    const unlockSize = tx.inputs.filter((v: any) => v.output!.script.isPublicKeyHashOut()).length * 107
-    let fee = Math.ceil(tx.toBuffer().length + unlockSize + 62)
-
-    let changeAmount = getUnspentValue(tx) - fee
-    if (changeAmount >= 1) {
-      tx.addOutput(
-        new mvc.Transaction.Output({
-          script: new mvc.Script(new mvc.Address('myPqtRpy1Ay65U5RmwX5q2sjXqcjDRCyVx', 'testnet')),
-          satoshis: changeAmount,
-        }),
-      )
-    }
-
-    // 签名
-    const { signature: signatureInfo } = await command('signTransaction', {
+    // 预览
+    const { txid } = await command('previewTransaction', {
       transaction: {
         txHex: tx.toString(),
-        address: 'myPqtRpy1Ay65U5RmwX5q2sjXqcjDRCyVx',
+        address,
         inputIndex: 0,
         scriptHex: outputScript.toHex(),
-        satoshis: 95786164,
+        satoshis: utxo.value,
       },
     })
+
+    await printMessage('> txid signed: ')
+    await printMessage(txid)
+  }
+
+  const signTransactions = async () => {
+    const { tx, address, outputScript, utxo } = await createFirstTransaction()
+    // console
+
+    // 构建链式交易2
+    // const tx2 = new mvc.Transaction()
+    // tx2.addInput(
+    //   new mvc.Transaction.Input({
+    //     prevTxId: tx.id,
+    //     outputIndex: 0,
+    //     script: mvc.Script.empty(),
+    //   }),
+    // )
+
+    // 签名
+    const { signatures: signaturesInfo } = await command('signTransactions', {
+      transactions: [
+        {
+          txHex: tx.toString(),
+          address,
+          inputIndex: 0,
+          scriptHex: outputScript.toHex(),
+          satoshis: utxo.value,
+        },
+      ],
+    })
+    const signatureInfo = signaturesInfo[0]
 
     const pureSig = mvc.crypto.Signature.fromTxFormat(Buffer.from(signatureInfo.sig, 'hex'))
     const txSignature = mvc.Transaction.Signature.fromObject({
@@ -247,7 +262,7 @@ export default function Home() {
   }
 
   const tryBroadcast = async (rawTx: string) => {
-    const res = await fetch('https://testnet.mvcapi.com/tx/broadcast', {
+    const res = await fetch('https://mainnet.mvcapi.com/tx/broadcast', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -319,6 +334,9 @@ export default function Home() {
             <button className="btn" onClick={() => command('getBalance')}>
               {t('getBalance')}
             </button>
+            <button className="btn" onClick={() => command('getUtxos')}>
+              {t('getUtxos')}
+            </button>
             <button className="btn" onClick={() => command('merge')}>
               {t('merge')}
             </button>
@@ -338,6 +356,9 @@ export default function Home() {
             </button>
             <button className="btn" onClick={callEciesDecrypt}>
               {t('eciesDecrypt')}
+            </button>
+            <button className="btn" onClick={previewTransaction}>
+              {t('previewTransaction')}
             </button>
             <button className="btn" onClick={signTransaction}>
               {t('signTransaction')}
@@ -389,6 +410,16 @@ export default function Home() {
                     {t('broadcast') + ' ' + (index + 1)}
                   </button>
                 ))}
+
+              {/* 清除待广播按钮 */}
+              {rawTxs.length > 0 && (
+                <button
+                  className="px-4 h-6 mor-shadow-sm font-medium text-gray-500 rounded-full text-xs flex items-center justify-center"
+                  onClick={() => setRawTxs([])}
+                >
+                  {t('clearTx')}
+                </button>
+              )}
             </div>
 
             <div className="flex justify-end px-4 gap-x-4">

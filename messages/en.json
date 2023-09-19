@@ -13,13 +13,16 @@
     "getPublicKey": "GetPublicKey",
     "getXPublicKey": "GetXPublicKey",
     "getBalance": "GetBalance",
+    "getUtxos": "GetUtxos",
     "transfer": "Transfer",
 
     "encryption": "Encryption & Signing",
     "eciesEncrypt": "ECIES Encrypt",
     "eciesDecrypt": "ECIES Decrypt",
     "broadcast": "Broadcast",
+    "clearTx": "Clear Tx",
     "merge": "Merge",
+    "previewTransaction": "Preview Transaction",
     "signTransaction": "Sign Transaction",
     "signTransactions": "Sign Transactions",
     "signMessage": "Sign Message"
