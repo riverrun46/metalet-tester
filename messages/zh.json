@@ -21,6 +21,7 @@
     "broadcast": "广播",
     "merge": "合并",
     "signTransaction": "签名交易",
+    "signTransactions": "签名多个交易",
     "signMessage": "签名消息"
   }
 }

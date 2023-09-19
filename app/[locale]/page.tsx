@@ -167,6 +167,85 @@ export default function Home() {
     setRawTxs((prev) => [...prev, tx.toString()])
   }
 
+  const signTransactions = async () => {
+    function getUnspentValue(tx: any) {
+      const inputAmount = tx.inputs.reduce((pre: number, cur: any) => cur.output.satoshis + pre, 0)
+      const outputAmount = tx.outputs.reduce((pre: number, cur: any) => cur.satoshis + pre, 0)
+
+      let unspentAmount = inputAmount - outputAmount
+      return unspentAmount
+    }
+    // 先创建一个交易
+    const tx = new mvc.Transaction()
+    const utxo = {
+      satoshis: 95786164,
+      address: new mvc.Address('myPqtRpy1Ay65U5RmwX5q2sjXqcjDRCyVx', 'testnet'),
+      txId: '4d6a25d47e35e7c2c0fa1d2019972a3157185c689eb77bdf7abcb2ac5bb71dcc',
+      outputIndex: 1,
+    }
+    const outputScript = mvc.Script.buildPublicKeyHashOut(utxo.address)
+    // @ts-ignore
+    const input = new mvc.Transaction.Input.PublicKeyHash({
+      output: new mvc.Transaction.Output({
+        script: outputScript,
+        satoshis: utxo.satoshis,
+      }),
+      prevTxId: utxo.txId,
+      outputIndex: utxo.outputIndex,
+      script: mvc.Script.empty(),
+    })
+    tx.addInput(input)
+    tx.addOutput(
+      new mvc.Transaction.Output({
+        script: new mvc.Script(new mvc.Address('myPqtRpy1Ay65U5RmwX5q2sjXqcjDRCyVx', 'testnet')),
+        satoshis: 1000,
+      }),
+    )
+
+    const unlockSize = tx.inputs.filter((v: any) => v.output!.script.isPublicKeyHashOut()).length * 107
+    let fee = Math.ceil(tx.toBuffer().length + unlockSize + 62)
+
+    let changeAmount = getUnspentValue(tx) - fee
+    if (changeAmount >= 1) {
+      tx.addOutput(
+        new mvc.Transaction.Output({
+          script: new mvc.Script(new mvc.Address('myPqtRpy1Ay65U5RmwX5q2sjXqcjDRCyVx', 'testnet')),
+          satoshis: changeAmount,
+        }),
+      )
+    }
+
+    // 签名
+    const { signature: signatureInfo } = await command('signTransaction', {
+      transaction: {
+        txHex: tx.toString(),
+        address: 'myPqtRpy1Ay65U5RmwX5q2sjXqcjDRCyVx',
+        inputIndex: 0,
+        scriptHex: outputScript.toHex(),
+        satoshis: 95786164,
+      },
+    })
+
+    const pureSig = mvc.crypto.Signature.fromTxFormat(Buffer.from(signatureInfo.sig, 'hex'))
+    const txSignature = mvc.Transaction.Signature.fromObject({
+      publicKey: signatureInfo.publicKey,
+      prevTxId: tx.inputs[0].prevTxId,
+      outputIndex: tx.inputs[0].outputIndex,
+      inputIndex: 0,
+      signature: pureSig,
+      sigtype: signatureInfo.sigtype,
+    })
+    const signedScript = mvc.Script.buildPublicKeyHashIn(
+      txSignature.publicKey,
+      txSignature.signature.toDER(),
+      txSignature.sigtype,
+    )
+    tx.inputs[0].setScript(signedScript)
+
+    // 推入生交易列表
+    setRawTxs((prev) => [...prev, tx.toString()])
+  }
+
   const tryBroadcast = async (rawTx: string) => {
     const res = await fetch('https://testnet.mvcapi.com/tx/broadcast', {
       method: 'POST',
@@ -262,6 +341,9 @@ export default function Home() {
             </button>
             <button className="btn" onClick={signTransaction}>
               {t('signTransaction')}
+            </button>
+            <button className="btn" onClick={signTransactions}>
+              {t('signTransactions')}
             </button>
             <button className="btn" onClick={() => command('signMessage', { message: 'Hello World' })}>
               {t('signMessage')}

@@ -21,6 +21,7 @@
     "broadcast": "Broadcast",
     "merge": "Merge",
     "signTransaction": "Sign Transaction",
+    "signTransactions": "Sign Transactions",
     "signMessage": "Sign Message"
   }
 }
