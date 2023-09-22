@@ -20,6 +20,11 @@ export default function Home() {
   }, [])
 
   const [consoleMessages, setConsoleMessages] = useState<string[]>([])
+  const clearConsole = () => {
+    setConsoleMessages([])
+    console.clear()
+  }
+
   const [rawTxs, setRawTxs] = useState<string[]>([])
 
   const command = async (cmd: string, params?: any) => {
@@ -94,15 +99,15 @@ export default function Home() {
         '4249453102f09ef3517e9cea9e74b1a59588fe60f9b3afd3b5dd0b9343d36d945f004f0d08a6af2e608de2f40181e7aadd4edeb8021ca6cc1374f099e045741ee6fa01e77e8c5c41eb68f1f2c35e40b8741d0ab169',
     })
   }
+  function getUnspentValue(tx: any) {
+    const inputAmount = tx.inputs.reduce((pre: number, cur: any) => cur.output.satoshis + pre, 0)
+    const outputAmount = tx.outputs.reduce((pre: number, cur: any) => cur.satoshis + pre, 0)
+
+    let unspentAmount = inputAmount - outputAmount
+    return unspentAmount
+  }
 
   const createFirstTransaction = async () => {
-    function getUnspentValue(tx: any) {
-      const inputAmount = tx.inputs.reduce((pre: number, cur: any) => cur.output.satoshis + pre, 0)
-      const outputAmount = tx.outputs.reduce((pre: number, cur: any) => cur.satoshis + pre, 0)
-
-      let unspentAmount = inputAmount - outputAmount
-      return unspentAmount
-    }
     // 先创建一个交易
     const tx = new mvc.Transaction()
     const address = await command('getAddress')
@@ -116,7 +121,7 @@ export default function Home() {
     } = await command('getUtxos').then((utxos) => {
       // 返回最大的一个utxo
       const maxUtxo = utxos.reduce((prev: any, cur: any) => {
-        if (cur.satoshis > prev.satoshis) {
+        if (cur.value > prev.value) {
           return cur
         } else {
           return prev
@@ -126,16 +131,26 @@ export default function Home() {
       return maxUtxo
     })
 
+    // const outputScript = mvc.Script.buildPublicKeyHashOut(utxo.address)
+    // // @ts-ignore
+    // const input = new mvc.Transaction.Input.PublicKeyHash({
+    //   output: new mvc.Transaction.Output({
+    //     script: outputScript,
+    //     satoshis: utxo.value,
+    //   }),
+    //   prevTxId: utxo.txid,
+    //   outputIndex: utxo.outIndex,
+    //   script: mvc.Script.empty(),
+    // })
     const outputScript = mvc.Script.buildPublicKeyHashOut(utxo.address)
-    // @ts-ignore
-    const input = new mvc.Transaction.Input.PublicKeyHash({
+    const input = new mvc.Transaction.Input({
+      prevTxId: utxo.txid,
+      outputIndex: utxo.outIndex,
+      script: mvc.Script.empty(),
       output: new mvc.Transaction.Output({
         script: outputScript,
         satoshis: utxo.value,
       }),
-      prevTxId: utxo.txid,
-      outputIndex: utxo.outIndex,
-      script: mvc.Script.empty(),
     })
     tx.addInput(input)
     tx.addOutput(
@@ -164,6 +179,57 @@ export default function Home() {
       outputScript,
       utxo,
     }
+  }
+  const addMoreTransaction = async (
+    transactions: {
+      txHex: string
+      address: string
+      inputIndex: number
+      scriptHex: string
+      satoshis: number
+    }[],
+  ) => {
+    const address = await command('getAddress')
+    const { network } = await command('getNetwork')
+    const newTx = new mvc.Transaction()
+    const previousTx = new mvc.Transaction(transactions[transactions.length - 1].txHex)
+    newTx.addInput(
+      new mvc.Transaction.Input({
+        prevTxId: previousTx.id,
+        outputIndex: 1,
+        script: mvc.Script.empty(),
+        output: previousTx.outputs[1],
+      }),
+    )
+    newTx.addOutput(
+      new mvc.Transaction.Output({
+        script: new mvc.Script(new mvc.Address(address, network)),
+        satoshis: 1000,
+      }),
+    )
+    const unlockSize = newTx.inputs.filter((v: any) => v.output!.script.isPublicKeyHashOut()).length * 107
+    let fee = Math.ceil(newTx.toBuffer().length + unlockSize + 62)
+
+    let changeAmount = getUnspentValue(newTx) - fee
+    if (changeAmount >= 546) {
+      newTx.addOutput(
+        new mvc.Transaction.Output({
+          script: new mvc.Script(new mvc.Address(address, network)),
+          satoshis: changeAmount,
+        }),
+      )
+    }
+
+    // push
+    transactions.push({
+      txHex: newTx.toString(),
+      address,
+      inputIndex: 0,
+      scriptHex: previousTx.outputs[1].script.toHex(),
+      satoshis: previousTx.outputs[1].satoshis,
+    })
+
+    return transactions
   }
 
   const signTransaction = async () => {
@@ -214,51 +280,40 @@ export default function Home() {
   }
 
   const signTransactions = async () => {
-    const { tx, address, outputScript, utxo } = await createFirstTransaction()
-    // console
+    const { network } = await command('getNetwork')
+    const { tx: tx0, address, outputScript, utxo } = await createFirstTransaction()
 
-    // 构建链式交易2
-    // const tx2 = new mvc.Transaction()
-    // tx2.addInput(
-    //   new mvc.Transaction.Input({
-    //     prevTxId: tx.id,
-    //     outputIndex: 0,
-    //     script: mvc.Script.empty(),
-    //   }),
-    // )
+    // const { txid } = await command('previewTransaction', {
+    //   transaction: {
+    //     txHex: tx0.toString(),
+    //     address,
+    //     inputIndex: 0,
+    //     scriptHex: outputScript.toHex(),
+    //     satoshis: utxo.value,
+    //   },
+    // })
+
+    // 构建链式交易
+    let transactions = [
+      {
+        txHex: tx0.toString(),
+        address,
+        inputIndex: 0,
+        scriptHex: outputScript.toHex(),
+        satoshis: utxo.value,
+      },
+    ]
+    for (let i = 0; i < 10; i++) {
+      transactions = await addMoreTransaction(transactions)
+    }
 
     // 签名
-    const { signatures: signaturesInfo } = await command('signTransactions', {
-      transactions: [
-        {
-          txHex: tx.toString(),
-          address,
-          inputIndex: 0,
-          scriptHex: outputScript.toHex(),
-          satoshis: utxo.value,
-        },
-      ],
+    const { signedTransactions } = await command('signTransactions', {
+      transactions,
     })
-    const signatureInfo = signaturesInfo[0]
-
-    const pureSig = mvc.crypto.Signature.fromTxFormat(Buffer.from(signatureInfo.sig, 'hex'))
-    const txSignature = mvc.Transaction.Signature.fromObject({
-      publicKey: signatureInfo.publicKey,
-      prevTxId: tx.inputs[0].prevTxId,
-      outputIndex: tx.inputs[0].outputIndex,
-      inputIndex: 0,
-      signature: pureSig,
-      sigtype: signatureInfo.sigtype,
-    })
-    const signedScript = mvc.Script.buildPublicKeyHashIn(
-      txSignature.publicKey,
-      txSignature.signature.toDER(),
-      txSignature.sigtype,
-    )
-    tx.inputs[0].setScript(signedScript)
 
     // 推入生交易列表
-    setRawTxs((prev) => [...prev, tx.toString()])
+    setRawTxs((prev) => [...prev, ...signedTransactions.map((v: any) => v.txHex)])
   }
 
   const tryBroadcast = async (rawTx: string) => {
@@ -434,7 +489,7 @@ export default function Home() {
               {/* 清空按钮 */}
               <button
                 className="w-16 h-6 mor-shadow-sm font-medium text-gray-500 rounded-full text-xs flex items-center justify-center"
-                onClick={() => setConsoleMessages([])}
+                onClick={() => clearConsole()}
               >
                 {t('clear')}
               </button>
