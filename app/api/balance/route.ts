@@ -6,7 +6,7 @@ export async function GET(request: Request) {
     return new Response('address is required', { status: 400 })
   }
 
-  const url = `https://unisat.io/wallet-api-v4/address/balance?address=${address}`
+  const url = `https://api.unisat.io/wallet-v4/address/balance?address=${address}`
   const res: any = await fetch(url, {
     headers: {
       'Content-Type': 'application/json',

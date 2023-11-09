@@ -17,8 +17,6 @@ export async function GET(request: Request) {
     },
   }).then((res) => res.json())
 
-  console.log({ res })
-
   return new Response(JSON.stringify(res), {
     headers: {
       'Access-Control-Allow-Origin': '*',

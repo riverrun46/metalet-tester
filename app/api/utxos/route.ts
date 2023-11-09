@@ -17,8 +17,8 @@ export async function GET(request: Request) {
   }
   const url =
     network === 'testnet'
-      ? `https://unisat.io/testnet/wallet-api-v4/address/btc-utxo?address=${address}`
-      : `https://unisat.io/wallet-api-v4/address/btc-utxo?address=${address}`
+      ? `https://api.unisat.io/testnet/wallet-v4/address/btc-utxo?address=${address}`
+      : `https://api.unisat.io/wallet-v4/address/btc-utxo?address=${address}`
   const res: any = await fetch(url, {
     headers: {
       'Content-Type': 'application/json',
