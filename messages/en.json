@@ -25,6 +25,7 @@
     "previewTransaction": "Preview Transaction",
     "signTransaction": "Sign Transaction",
     "signTransactions": "Sign Transactions",
+    "debugTransactions": "Debug Transactions",
     "signMessage": "Sign Message"
   }
 }

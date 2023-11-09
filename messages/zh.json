@@ -25,6 +25,7 @@
     "previewTransaction": "预览交易",
     "signTransaction": "签名交易",
     "signTransactions": "签名多个交易",
+    "debugTransactions": "调试交易",
     "signMessage": "签名消息"
   }
 }
