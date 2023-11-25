@@ -14,6 +14,9 @@ dependencies:
   '@types/react-dom':
     specifier: 18.0.11
     version: 18.0.11
+  '@vercel/edge':
+    specifier: ^1.1.1
+    version: 1.1.1
   '@vercel/kv':
     specifier: ^0.2.1
     version: 0.2.1
@@ -459,6 +462,10 @@ packages:
       isomorphic-fetch: 3.0.0
     transitivePeerDependencies:
       - encoding
+    dev: false
+
+  /@vercel/edge@1.1.1:
+    resolution: {integrity: sha512-NtKiIbn9Cq6HWGy+qRudz28mz5nxfOJWls5Pnckjw1yCfSX8rhXdvY/il3Sy3Zd5n/sKCM2h7VSCCpJF/oaDrQ==}
     dev: false
 
   /@vercel/kv@0.2.1:

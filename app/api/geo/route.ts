@@ -1,7 +1,11 @@
-import { NextRequest } from 'next/server'
+import { geolocation } from '@vercel/edge'
 
-export async function GET(request: NextRequest) {
-  return new Response(JSON.stringify(request.geo?.country || 'unknown'), {
+export const runtime = 'edge'
+
+export async function GET(request: Request) {
+  const geo = geolocation(request)
+
+  return new Response(JSON.stringify(geo.country || 'unknown'), {
     headers: {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
