@@ -6,7 +6,6 @@ import Link from 'next/link'
 // @ts-ignore
 // import mvc from 'mvc-lib'
 import * as bitcoinjs from 'bitcoinjs-lib'
-import * as psbtUtil from 'bitcoinjs-lib/src/psbt/psbtutils'
 
 import cases from '@/app/data/cases'
 

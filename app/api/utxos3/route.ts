@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const address = searchParams.get('address')
@@ -8,7 +10,7 @@ export async function GET(request: Request) {
   }
 
   // proxy to metalet.space
-  const url = `https://www.metalet.space/wallet-api/v3/address/btc-utxo?net=${network}&address=${address}`
+  const url = `https://www.metalet.space/wallet-api/v3/address/btc-utxo?net=${network}&address=${address}&unconfirmed=1`
   const res: any = await fetch(url, {
     headers: {
       'Content-Type': 'application/json',
