@@ -5,6 +5,7 @@ export const runtime = 'edge'
 export async function GET(request: Request) {
   const geo = geolocation(request)
 
+  // ok
   return new Response(JSON.stringify(geo.country || 'unknown'), {
     headers: {
       'Access-Control-Allow-Origin': '*',
