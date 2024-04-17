@@ -42,6 +42,7 @@ export async function POST(request: Request) {
         output: edict.output.toString(),
       }
     }),
+    pointer: runestone.pointer.unwrap().toString(),
   }
 
   return new Response(
