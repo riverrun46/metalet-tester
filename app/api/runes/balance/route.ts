@@ -5,12 +5,15 @@ import { DOMAIN } from '@/app/data/constants'
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const address = searchParams.get('address')
+  const runeid = searchParams.get('runeid')
 
   if (!address) {
     return new Response('address is required', { status: 400 })
   }
 
-  const url = `${DOMAIN}/address/${address}/runes/balance-list?start=0&limit=50`
+  const url = runeid
+    ? `${DOMAIN}/address/${address}/runes/${runeid}/balance`
+    : `${DOMAIN}/address/${address}/runes/balance-list?start=0&limit=50`
   const res: any = await fetch(url, {
     headers: {
       'Content-Type': 'application/json',
