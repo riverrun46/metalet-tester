@@ -1,4 +1,3 @@
-import assert from 'node:assert/strict'
 import { Artifact, isRunestone } from '../artifact'
 import { COMMIT_CONFIRMATIONS, OP_RETURN, TAPROOT_ANNEX_PREFIX, TAPROOT_SCRIPT_PUBKEY_TYPE } from '../constants'
 import { u128, u32, u64 } from '../integer'
@@ -37,8 +36,7 @@ export class RuneUpdater implements RuneBlockIndex {
   utxoBalances: RuneUtxoBalance[] = []
   spentOutputs: RuneOutput[] = []
 
-  _minimum: Rune
-
+  private _minimum: Rune
   private _mintCountsByRuneLocation: Map<string, RuneMintCount> = new Map()
   private _burnedBalancesByRuneLocation: Map<string, RuneBalance> = new Map()
 
@@ -209,7 +207,9 @@ export class RuneUpdater implements RuneBlockIndex {
 
       const optionVout = pointer
         .map((pointer) => Number(pointer))
-        .inspect((pointer) => assert(pointer < allocated.length))
+        .inspect((pointer) => {
+          if (pointer < 0 || pointer >= allocated.length) throw new Error('Pointer is invalid')
+        })
         .orElse(() => {
           const entry = [...tx.vout.entries()].find(([_, txOut]) => !isScriptPubKeyHexOpReturn(txOut.scriptPubKey.hex))
           return entry !== undefined ? Some(entry[0]) : None
@@ -303,13 +303,27 @@ export class RuneUpdater implements RuneBlockIndex {
     if (optionRune.isSome()) {
       rune = optionRune.unwrap()
 
+      if (rune.value < this._minimum.value) {
+        return None
+      }
+
+      if (rune.reserved) {
+        return None
+      }
+
       if (
-        rune.value < this._minimum.value ||
-        rune.reserved ||
-        this.etchings.find((etching) => SpacedRune.fromString(etching.runeName).rune.toString() === rune.toString()) ||
-        (await this._storage.getRuneLocation(rune.toString())) !== null ||
-        !(await this.txCommitsToRune(tx, rune))
+        this.etchings.find((etching) => SpacedRune.fromString(etching.runeName).rune.toString() === rune.toString())
       ) {
+        return None
+      }
+
+      const runeLocation = await this._storage.getRuneLocation(rune.toString())
+      if (runeLocation && runeLocation.block < this.block.height) {
+        return None
+      }
+
+      const txCommitsToRune = await this.txCommitsToRune(tx, rune)
+      if (!txCommitsToRune) {
         return None
       }
     } else {
@@ -364,7 +378,7 @@ export class RuneUpdater implements RuneBlockIndex {
     this._mintCountsByRuneLocation.set(runeLocation, currentBlockMints)
 
     const totalMints =
-      currentBlockMints.count + (await this._storage.getValidMintCount(runeLocation, this.block.previousblockhash))
+      currentBlockMints.count + (await this._storage.getValidMintCount(runeLocation, this.block.height - 1))
 
     if (totalMints >= cap) {
       return None
@@ -493,7 +507,7 @@ export class RuneUpdater implements RuneBlockIndex {
                     ? {
                         height: {
                           ...(unwrappedTerms.height[0].isSome() ? { start: unwrappedTerms.height[0].unwrap() } : {}),
-                          ...(unwrappedTerms.height[1].isSome() ? { start: unwrappedTerms.height[1].unwrap() } : {}),
+                          ...(unwrappedTerms.height[1].isSome() ? { end: unwrappedTerms.height[1].unwrap() } : {}),
                         },
                       }
                     : {}),
@@ -501,7 +515,7 @@ export class RuneUpdater implements RuneBlockIndex {
                     ? {
                         offset: {
                           ...(unwrappedTerms.offset[0].isSome() ? { start: unwrappedTerms.offset[0].unwrap() } : {}),
-                          ...(unwrappedTerms.offset[1].isSome() ? { start: unwrappedTerms.offset[1].unwrap() } : {}),
+                          ...(unwrappedTerms.offset[1].isSome() ? { end: unwrappedTerms.offset[1].unwrap() } : {}),
                         },
                       }
                     : {}),

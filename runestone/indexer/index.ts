@@ -5,23 +5,20 @@ import { RuneUpdater } from './updater';
 import { u128 } from '../integer';
 
 export * from './types';
+export { RuneUpdater } from './updater';
 
 export class RunestoneIndexer {
   private readonly _storage: RunestoneStorage;
   private readonly _rpc: BitcoinRpcClient;
   private readonly _network: Network;
-  private readonly _pollIntervalMs: number | null;
 
   private _started: boolean = false;
-  private _updateInProgress: Promise<void> | null = null;
-  private _intervalId: NodeJS.Timeout | null = null;
+  private _updateInProgress: boolean = false;
 
   constructor(options: RunestoneIndexerOptions) {
     this._rpc = options.bitcoinRpcClient;
     this._storage = options.storage;
     this._network = options.network;
-    this._pollIntervalMs =
-      options.pollIntervalMs !== null ? Math.max(options.pollIntervalMs ?? 10000, 0) : null;
   }
 
   async start(): Promise<void> {
@@ -32,10 +29,6 @@ export class RunestoneIndexer {
     await this._storage.connect();
 
     this._started = true;
-
-    if (this._pollIntervalMs !== null) {
-      this._intervalId = setInterval(() => this.updateRuneUtxoBalances(), this._pollIntervalMs);
-    }
 
     if (this._network === Network.MAINNET) {
       this._storage.seedEtchings([
@@ -57,142 +50,86 @@ export class RunestoneIndexer {
       return;
     }
 
-    if (this._intervalId !== null) {
-      clearInterval(this._intervalId);
-      this._intervalId = null;
-    }
-
     await this._storage.disconnect();
     this._started = false;
   }
 
   async updateRuneUtxoBalances(): Promise<void> {
+    if (!this._started) {
+      throw new Error('Runestone indexer is not started');
+    }
+
     if (this._updateInProgress) {
       return;
     }
 
-    this._updateInProgress = this.updateRuneUtxoBalancesImpl();
+    this._updateInProgress = true;
     try {
-      await this._updateInProgress;
+      await this.updateRuneUtxoBalancesImpl();
     } finally {
-      this._updateInProgress = null;
+      this._updateInProgress = false;
     }
   }
 
   private async updateRuneUtxoBalancesImpl() {
-    const newBlockhashesToIndex: string[] = [];
-
     const currentStorageBlock = await this._storage.getCurrentBlock();
-    if (currentStorageBlock !== null) {
-      // If rpc block indexing is ahead of our storage, let's save up all block hashes
-      // until we arrive back to the current storage's block tip.
-      const bestblockhashResult = await this._rpc.getbestblockhash();
-      if (bestblockhashResult.error !== null) {
-        throw bestblockhashResult.error;
-      }
-      const bestblockhash = bestblockhashResult.result;
-
-      let rpcBlockResult = await this._rpc.getblock({
-        blockhash: bestblockhash,
-        verbosity: 1,
-      });
-      if (rpcBlockResult.error !== null) {
-        throw rpcBlockResult.error;
-      }
-      let rpcBlock = rpcBlockResult.result;
-
-      while (rpcBlock.height > currentStorageBlock.height) {
-        newBlockhashesToIndex.push(rpcBlock.hash);
-
-        rpcBlockResult = await this._rpc.getblock({
-          blockhash: rpcBlock.previousblockhash,
-          verbosity: 1,
-        });
-        if (rpcBlockResult.error !== null) {
-          throw rpcBlockResult.error;
+    if (currentStorageBlock) {
+      // walk down until matching hash is found
+      const reorgBlockhashesToIndex: string[] = [];
+      let blockheight = currentStorageBlock.height;
+      let blockhash = (await this._rpc.getblockhash({ height: blockheight })).result;
+      let storageBlockHash: string | null = currentStorageBlock.hash;
+      while (storageBlockHash !== blockhash) {
+        if (blockhash) {
+          reorgBlockhashesToIndex.push(blockhash);
         }
-        rpcBlock = rpcBlockResult.result;
+
+        blockheight--;
+        blockhash = (await this._rpc.getblockhash({ height: blockheight })).result;
+        storageBlockHash = await this._storage.getBlockhash(blockheight);
       }
 
-      // Handle edge case where storage block height is higher than rpc node block
-      // (such as pointing to a newly indexing rpc node)
-      let storageBlockhash =
-        currentStorageBlock && currentStorageBlock.height === rpcBlock.height
-          ? currentStorageBlock.hash
-          : await this._storage.getBlockhash(rpcBlock.height);
-
-      // Now rpc and storage blocks are at the same height,
-      // iterate until they are also the same hash
-      while (rpcBlock.hash !== storageBlockhash) {
-        newBlockhashesToIndex.push(rpcBlock.hash);
-
-        rpcBlockResult = await this._rpc.getblock({
-          blockhash: rpcBlock.previousblockhash,
-          verbosity: 1,
-        });
-        if (rpcBlockResult.error !== null) {
-          throw rpcBlockResult.error;
+      // process blocks that are reorgs
+      for (const blockhash of reorgBlockhashesToIndex) {
+        const blockResult = await this._rpc.getblock({ blockhash, verbosity: 2 });
+        if (blockResult.error !== null) {
+          throw blockResult.error;
         }
-        rpcBlock = rpcBlockResult.result;
+        const block = blockResult.result;
 
-        storageBlockhash = await this._storage.getBlockhash(rpcBlock.height);
-      }
+        const runeUpdater = new RuneUpdater(this._network, block, true, this._storage, this._rpc);
 
-      // We can reset our storage state to where rpc node and storage matches
-      if (currentStorageBlock && currentStorageBlock.hash !== rpcBlock.hash) {
-        await this._storage.resetCurrentBlock(rpcBlock);
-      }
-    } else {
-      const firstRuneHeight = Network.getFirstRuneHeight(this._network);
-
-      // Iterate through the rpc blocks until we reach first rune height
-      const bestblockhashResult = await this._rpc.getbestblockhash();
-      if (bestblockhashResult.error !== null) {
-        throw bestblockhashResult.error;
-      }
-      const bestblockhash = bestblockhashResult.result;
-
-      let rpcBlockResult = await this._rpc.getblock({
-        blockhash: bestblockhash,
-        verbosity: 1,
-      });
-      if (rpcBlockResult.error !== null) {
-        throw rpcBlockResult.error;
-      }
-      let rpcBlock = rpcBlockResult.result;
-
-      while (rpcBlock.height >= firstRuneHeight) {
-        newBlockhashesToIndex.push(rpcBlock.hash);
-
-        rpcBlockResult = await this._rpc.getblock({
-          blockhash: rpcBlock.previousblockhash,
-          verbosity: 1,
-        });
-        if (rpcBlockResult.error !== null) {
-          throw rpcBlockResult.error;
+        for (const [txIndex, tx] of block.tx.entries()) {
+          await runeUpdater.indexRunes(tx, txIndex);
         }
-        rpcBlock = rpcBlockResult.result;
+
+        await this._storage.saveBlockIndex(runeUpdater);
       }
     }
 
-    // Finally start processing balances using newBlockhashesToIndex
-    let blockhash = newBlockhashesToIndex.pop();
-    while (blockhash !== undefined) {
+    // start from first rune height or next block height, whichever is greater
+    let blockheight = Math.max(
+      Network.getFirstRuneHeight(this._network),
+      currentStorageBlock ? currentStorageBlock.height + 1 : 0
+    );
+    let blockhash = (await this._rpc.getblockhash({ height: blockheight })).result;
+    while (blockhash !== null) {
       const blockResult = await this._rpc.getblock({ blockhash, verbosity: 2 });
       if (blockResult.error !== null) {
         throw blockResult.error;
       }
       const block = blockResult.result;
-      const reorg = currentStorageBlock ? currentStorageBlock.height >= block.height : false;
 
-      const runeUpdater = new RuneUpdater(this._network, block, reorg, this._storage, this._rpc);
+      const runeUpdater = new RuneUpdater(this._network, block, false, this._storage, this._rpc);
 
       for (const [txIndex, tx] of block.tx.entries()) {
         await runeUpdater.indexRunes(tx, txIndex);
       }
 
       await this._storage.saveBlockIndex(runeUpdater);
-      blockhash = newBlockhashesToIndex.pop();
+
+      blockheight++;
+      blockhash = (await this._rpc.getblockhash({ height: blockheight })).result;
     }
   }
 }

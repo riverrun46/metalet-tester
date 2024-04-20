@@ -3,21 +3,71 @@ export const dynamic = 'force-dynamic'
 import { isRunestone } from '@/runestone/artifact'
 import { type Cenotaph } from '@/runestone/cenotaph'
 import { Runestone } from '@/runestone/runestone'
+import { RunestoneSpec, tryDecodeRunestone } from '@/runestone'
 
 export async function POST(request: Request) {
   const requestJson = await request.json()
   const script = requestJson.script
+  let runestoneIndex = requestJson.runestoneIndex
+  if (typeof runestoneIndex === 'undefined') {
+    runestoneIndex = 2
+  }
 
   if (!script) {
     return new Response('script is required', { status: 400 })
   }
 
-  const runestoneTx = { vout: [{ scriptPubKey: { hex: script } }] }
+  type Output = {
+    scriptPubKey: {
+      hex: string
+    }
+  }
+  const placeholderOutput: Output = {
+    scriptPubKey: {
+      hex: '',
+    },
+  }
+  const vout: Output[] = []
+  for (let i = 0; i < runestoneIndex; i++) {
+    vout.push(placeholderOutput)
+  }
+  vout.push({ scriptPubKey: { hex: script } })
+  const runestoneTx = { vout }
+  // const artifact = tryDecodeRunestone(runestoneTx)
+
+  // if (!artifact) {
+  //   return new Response(
+  //     JSON.stringify({
+  //       type: 'none',
+  //     }),
+  //     { status: 200 },
+  //   )
+  // }
+
+  // if ('flaws' in artifact) {
+  //   console.log('artifact', artifact)
+  //   return new Response(
+  //     JSON.stringify({
+  //       type: 'cenotaph',
+  //       flaws: artifact.flaws,
+  //     }),
+  //     { status: 200 },
+  //   )
+  // }
+
+  // const runestone = artifact as RunestoneSpec
+  // return new Response(
+  //   JSON.stringify({
+  //     type: 'runestone',
+  //     spec: runestone,
+  //   }),
+  //   { status: 200 },
+  // )
+
   const artifact = Runestone.decipher(runestoneTx)
   if (artifact.isNone()) {
     return new Response('decipher failed', { status: 400 })
   }
-  console.log('artifact', artifact.unwrap())
   if (!isRunestone(artifact.unwrap())) {
     const cenotaph = artifact.unwrap() as Cenotaph
     return new Response(
@@ -42,7 +92,7 @@ export async function POST(request: Request) {
         output: edict.output.toString(),
       }
     }),
-    pointer: runestone.pointer.unwrap().toString(),
+    pointer: runestone.pointer.isNone() ? null : runestone.pointer.unwrap().toString(),
   }
 
   return new Response(

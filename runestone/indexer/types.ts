@@ -49,12 +49,16 @@ export interface RunestoneStorage {
   getEtching(runeLocation: string): Promise<RuneEtching | null>;
 
   /**
-   * Get the total valid mint counts for rune.
+   * Get the total valid mint counts for rune up to and including specified block height.
    * @param rune rune id string representation
-   * @param blockhash hash to specify explicit block chain tip to use
+   * @param blockheight block height to count up to
    */
-  getValidMintCount(runeLocation: string, blockhash: string): Promise<number>;
+  getValidMintCount(runeLocation: string, blockheight: number): Promise<number>;
 
+  /**
+   * Get rune location given rune ticker.
+   * @param runeTicker rune ticker
+   */
   getRuneLocation(runeTicker: string): Promise<RuneLocation | null>;
 
   /**

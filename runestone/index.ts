@@ -1,3 +1,4 @@
+import { isRunestone } from './artifact'
 import { MAX_DIVISIBILITY } from './constants'
 import { Etching } from './etching'
 import { RuneEtchingSpec } from './indexer'
@@ -5,7 +6,7 @@ import { u128, u32, u64, u8 } from './integer'
 import { None, Option, Some } from './monads'
 import { Rune } from './rune'
 import { RuneId } from './runeid'
-import { Runestone } from './runestone'
+import { Runestone, RunestoneTx } from './runestone'
 import { SpacedRune } from './spacedrune'
 import { Terms } from './terms'
 
@@ -19,6 +20,7 @@ export type {
   RuneLocation,
   RuneMintCount,
   RuneOutput,
+  RuneUpdater,
   RuneUtxoBalance,
   RunestoneIndexer,
   RunestoneIndexerOptions,
@@ -30,6 +32,7 @@ export { Network } from './network'
 export type {
   BitcoinRpcClient,
   GetBlockParams,
+  GetBlockhashParams,
   GetBlockReturn,
   GetRawTransactionParams,
   GetRawTransactionReturn,
@@ -52,6 +55,15 @@ export type RunestoneSpec = {
     amount: bigint
     output: number
   }[]
+}
+
+export type Cenotaph = {
+  flaws: string[]
+  etching?: string
+  mint?: {
+    block: bigint
+    tx: number
+  }
 }
 
 // Helper functions to ensure numbers fit the desired type correctly
@@ -84,8 +96,6 @@ const u128Strict = (n: bigint) => {
   return u128(bigN)
 }
 
-const SPACERS = ['•', '.']
-
 // TODO: Add unit tests
 /**
  * Low level function to allow for encoding runestones without any indexer and transaction checks.
@@ -98,19 +108,9 @@ export function encodeRunestone(runestone: RunestoneSpec): {
   encodedRunestone: Buffer
   etchingCommitment?: Buffer
 } {
-  const mint = runestone.mint
-    ? Some(
-        new RuneId(
-          u64Strict(runestone.mint.block),
-          u32Strict(runestone.mint.tx),
-        ),
-      )
-    : None
+  const mint = runestone.mint ? Some(new RuneId(u64Strict(runestone.mint.block), u32Strict(runestone.mint.tx))) : None
 
-  const pointer =
-    runestone.pointer !== undefined
-      ? Some(runestone.pointer).map(u32Strict)
-      : None
+  const pointer = runestone.pointer !== undefined ? Some(runestone.pointer).map(u32Strict) : None
 
   const edicts = (runestone.edicts ?? []).map((edict) => ({
     id: new RuneId(u64Strict(edict.id.block), u32Strict(edict.id.tx)),
@@ -123,78 +123,49 @@ export function encodeRunestone(runestone: RunestoneSpec): {
   if (runestone.etching) {
     const etchingSpec = runestone.etching
 
-    const spacedRune = etchingSpec.runeName
-      ? SpacedRune.fromString(etchingSpec.runeName)
-      : undefined
+    const spacedRune = etchingSpec.runeName ? SpacedRune.fromString(etchingSpec.runeName) : undefined
     const rune = spacedRune?.rune !== undefined ? Some(spacedRune.rune) : None
 
     if (
       etchingSpec.symbol &&
       !(
         etchingSpec.symbol.length === 1 ||
-        (etchingSpec.symbol.length === 2 &&
-          etchingSpec.symbol.codePointAt(0)! >= 0x10000)
+        (etchingSpec.symbol.length === 2 && etchingSpec.symbol.codePointAt(0)! >= 0x10000)
       )
     ) {
       throw Error('Symbol must be one code point')
     }
 
-    const divisibility =
-      etchingSpec.divisibility !== undefined
-        ? Some(etchingSpec.divisibility).map(u8Strict)
-        : None
-    const premine =
-      etchingSpec.premine !== undefined
-        ? Some(etchingSpec.premine).map(u128Strict)
-        : None
+    const divisibility = etchingSpec.divisibility !== undefined ? Some(etchingSpec.divisibility).map(u8Strict) : None
+    const premine = etchingSpec.premine !== undefined ? Some(etchingSpec.premine).map(u128Strict) : None
     const spacers =
-      spacedRune?.spacers !== undefined && spacedRune.spacers !== 0
-        ? Some(u32Strict(spacedRune.spacers))
-        : None
+      spacedRune?.spacers !== undefined && spacedRune.spacers !== 0 ? Some(u32Strict(spacedRune.spacers)) : None
     const symbol = etchingSpec.symbol ? Some(etchingSpec.symbol) : None
 
     if (divisibility.isSome() && divisibility.unwrap() > MAX_DIVISIBILITY) {
-      throw Error(
-        `Divisibility is greater than protocol max ${MAX_DIVISIBILITY}`,
-      )
+      throw Error(`Divisibility is greater than protocol max ${MAX_DIVISIBILITY}`)
     }
 
     let terms: Option<Terms> = None
     if (etchingSpec.terms) {
       const termsSpec = etchingSpec.terms
 
-      const amount =
-        termsSpec.amount !== undefined
-          ? Some(termsSpec.amount).map(u128Strict)
-          : None
-      const cap =
-        termsSpec.cap !== undefined ? Some(termsSpec.cap).map(u128Strict) : None
+      const amount = termsSpec.amount !== undefined ? Some(termsSpec.amount).map(u128Strict) : None
+      const cap = termsSpec.cap !== undefined ? Some(termsSpec.cap).map(u128Strict) : None
       const height: [Option<u64>, Option<u64>] = termsSpec.height
         ? [
-            termsSpec.height.start !== undefined
-              ? Some(termsSpec.height.start).map(u64Strict)
-              : None,
-            termsSpec.height.end !== undefined
-              ? Some(termsSpec.height.end).map(u64Strict)
-              : None,
+            termsSpec.height.start !== undefined ? Some(termsSpec.height.start).map(u64Strict) : None,
+            termsSpec.height.end !== undefined ? Some(termsSpec.height.end).map(u64Strict) : None,
           ]
         : [None, None]
       const offset: [Option<u64>, Option<u64>] = termsSpec.offset
         ? [
-            termsSpec.offset.start !== undefined
-              ? Some(termsSpec.offset.start).map(u64Strict)
-              : None,
-            termsSpec.offset.end !== undefined
-              ? Some(termsSpec.offset.end).map(u64Strict)
-              : None,
+            termsSpec.offset.start !== undefined ? Some(termsSpec.offset.start).map(u64Strict) : None,
+            termsSpec.offset.end !== undefined ? Some(termsSpec.offset.end).map(u64Strict) : None,
           ]
         : [None, None]
 
-      if (
-        amount.isSome() &&
-        cap.isSome() &&
-        amount.unwrap() * cap.unwrap() > u128.MAX
-      ) {
+      if (amount.isSome() && cap.isSome() && amount.unwrap() * cap.unwrap() > u128.MAX) {
         throw Error('Terms overflow with amount times cap')
       }
 
@@ -203,14 +174,102 @@ export function encodeRunestone(runestone: RunestoneSpec): {
 
     const turbo = etchingSpec.turbo ?? false
 
-    etching = Some(
-      new Etching(divisibility, rune, spacers, symbol, terms, premine, turbo),
-    )
+    etching = Some(new Etching(divisibility, rune, spacers, symbol, terms, premine, turbo))
     etchingCommitment = rune.isSome() ? rune.unwrap().commitment : undefined
   }
 
   return {
     encodedRunestone: new Runestone(mint, pointer, edicts, etching).encipher(),
     etchingCommitment,
+  }
+}
+
+export function tryDecodeRunestone(tx: RunestoneTx): RunestoneSpec | Cenotaph | null {
+  const optionArtifact = Runestone.decipher(tx)
+  if (optionArtifact.isNone()) {
+    return null
+  }
+
+  const artifact = optionArtifact.unwrap()
+  if (isRunestone(artifact)) {
+    const runestone = artifact
+
+    const etching = () => runestone.etching.unwrap()
+    const terms = () => etching().terms.unwrap()
+
+    return {
+      ...(runestone.etching.isSome()
+        ? {
+            etching: {
+              ...(etching().divisibility.isSome() ? { divisibility: etching().divisibility.map(Number).unwrap() } : {}),
+              ...(etching().premine.isSome() ? { premine: etching().premine.unwrap() } : {}),
+              ...(etching().rune.isSome()
+                ? {
+                    runeName: new SpacedRune(
+                      etching().rune.unwrap(),
+                      etching().spacers.map(Number).unwrapOr(0),
+                    ).toString(),
+                  }
+                : {}),
+              ...(etching().symbol.isSome() ? { symbol: etching().symbol.unwrap() } : {}),
+              ...(etching().terms.isSome()
+                ? {
+                    terms: {
+                      ...(terms().amount.isSome() ? { amount: terms().amount.unwrap() } : {}),
+                      ...(terms().cap.isSome() ? { cap: terms().cap.unwrap() } : {}),
+                      ...(terms().height.find((option) => option.isSome())
+                        ? {
+                            height: {
+                              ...(terms().height[0].isSome() ? { start: terms().height[0].unwrap() } : {}),
+                              ...(terms().height[1].isSome() ? { end: terms().height[1].unwrap() } : {}),
+                            },
+                          }
+                        : {}),
+                      ...(terms().offset.find((option) => option.isSome())
+                        ? {
+                            offset: {
+                              ...(terms().offset[0].isSome() ? { start: terms().offset[0].unwrap() } : {}),
+                              ...(terms().offset[1].isSome() ? { end: terms().offset[1].unwrap() } : {}),
+                            },
+                          }
+                        : {}),
+                    },
+                  }
+                : {}),
+              turbo: etching().turbo,
+            },
+          }
+        : {}),
+      ...(runestone.mint.isSome()
+        ? {
+            mint: {
+              block: runestone.mint.unwrap().block,
+              tx: Number(runestone.mint.unwrap().tx),
+            },
+          }
+        : {}),
+      ...(runestone.pointer.isSome() ? { pointer: Number(runestone.pointer.unwrap()) } : {}),
+      ...(runestone.edicts.length
+        ? {
+            edicts: runestone.edicts.map((edict) => ({
+              id: {
+                block: edict.id.block,
+                tx: Number(edict.id.tx),
+              },
+              amount: edict.amount,
+              output: Number(edict.output),
+            })),
+          }
+        : {}),
+    }
+  } else {
+    const cenotaph = artifact
+    return {
+      flaws: [],
+      ...(cenotaph.etching.isSome() ? { etching: cenotaph.etching.unwrap().toString() } : {}),
+      ...(cenotaph.mint.isSome()
+        ? { mint: { block: cenotaph.mint.unwrap().block, tx: Number(cenotaph.mint.unwrap().tx) } }
+        : {}),
+    }
   }
 }

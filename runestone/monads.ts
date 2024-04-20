@@ -5,7 +5,7 @@
  * Type representing any value except 'undefined'.
  * This is useful when working with strict null checks, ensuring that a value can be null but not undefined.
  */
-type NonUndefined = {} | null; // eslint-disable-line @typescript-eslint/ban-types
+type NonUndefined = {} | null
 
 /**
  * Enum-like object to represent the type of an Option (Some or None).
@@ -13,15 +13,15 @@ type NonUndefined = {} | null; // eslint-disable-line @typescript-eslint/ban-typ
 export const OptionType = {
   Some: Symbol(':some'),
   None: Symbol(':none'),
-};
+}
 
 /**
  * Interface for handling match operations on an Option.
  * Allows executing different logic based on the Option being Some or None.
  */
 interface Match<A, B> {
-  some: (val: A) => B;
-  none: (() => B) | B;
+  some: (val: A) => B
+  none: (() => B) | B
 }
 
 /**
@@ -32,7 +32,7 @@ export interface Option<T extends NonUndefined> {
   /**
    * Represents the type of the Option: either Some or None. Useful for debugging and runtime checks.
    */
-  type: symbol;
+  type: symbol
 
   /**
    * Determines if the Option is a Some.
@@ -46,7 +46,7 @@ export interface Option<T extends NonUndefined> {
    * console.log(None.isSome()); // false
    * ```
    */
-  isSome(): boolean;
+  isSome(): boolean
 
   /**
    * Determines if the Option is None.
@@ -60,7 +60,7 @@ export interface Option<T extends NonUndefined> {
    * console.log(None.isNone()); // true
    * ```
    */
-  isNone(): boolean;
+  isNone(): boolean
 
   /**
    * Performs a match operation on the Option, allowing for branching logic based on its state.
@@ -89,7 +89,7 @@ export interface Option<T extends NonUndefined> {
    * console.log(matchResultNone); // Outputs: "There is no value."
    * ```
    */
-  match<U extends NonUndefined>(fn: Match<T, U>): U;
+  match<U extends NonUndefined>(fn: Match<T, U>): U
 
   /**
    * Applies a function to the contained value (if any), or returns a default if None.
@@ -104,9 +104,9 @@ export interface Option<T extends NonUndefined> {
    * const noneLength = None.map(s => s.length); // None
    * ```
    */
-  map<U extends NonUndefined>(fn: (val: T) => U): Option<U>;
+  map<U extends NonUndefined>(fn: (val: T) => U): Option<U>
 
-  inspect(fn: (val: T) => void): Option<T>;
+  inspect(fn: (val: T) => void): Option<T>
 
   /**
    * Transforms the Option into another by applying a function to the contained value,
@@ -126,7 +126,7 @@ export interface Option<T extends NonUndefined> {
    * const noResult = Some("abc").andThen(parse); // None
    * ```
    */
-  andThen<U extends NonUndefined>(fn: (val: T) => Option<U>): Option<U>;
+  andThen<U extends NonUndefined>(fn: (val: T) => Option<U>): Option<U>
 
   /**
    * Returns this Option if it is Some, otherwise returns the option provided as a parameter.
@@ -142,9 +142,9 @@ export interface Option<T extends NonUndefined> {
    * const noneOption = None.or(defaultOption); // Some("default")
    * ```
    */
-  or(optb: Option<T>): Option<T>;
+  or(optb: Option<T>): Option<T>
 
-  orElse(optb: () => Option<T>): Option<T>;
+  orElse(optb: () => Option<T>): Option<T>
 
   /**
    * Returns the option provided as a parameter if the original Option is Some, otherwise returns None.
@@ -160,7 +160,7 @@ export interface Option<T extends NonUndefined> {
    * const noneOption = None.and(anotherOption); // None
    * ```
    */
-  and<U extends NonUndefined>(optb: Option<U>): Option<U>;
+  and<U extends NonUndefined>(optb: Option<U>): Option<U>
 
   /**
    * Returns the contained value if Some, otherwise returns the provided default value.
@@ -175,7 +175,7 @@ export interface Option<T extends NonUndefined> {
    * const noneValue = None.unwrapOr("default"); // "default"
    * ```
    */
-  unwrapOr(def: T): T;
+  unwrapOr(def: T): T
 
   /**
    * Unwraps an Option, yielding the contained value if Some, otherwise throws an error.
@@ -190,21 +190,21 @@ export interface Option<T extends NonUndefined> {
    * console.log(None.unwrap()); // throws Error
    * ```
    */
-  unwrap(): T | never;
+  unwrap(): T | never
 }
 
 /**
  * Implementation of Option representing a value (Some).
  */
 interface SomeOption<T extends NonUndefined> extends Option<T> {
-  unwrap(): T;
+  unwrap(): T
 }
 
 /**
  * Implementation of Option representing the absence of a value (None).
  */
 interface NoneOption<T extends NonUndefined> extends Option<T> {
-  unwrap(): never;
+  unwrap(): never
 }
 
 /**
@@ -214,52 +214,52 @@ class SomeImpl<T extends NonUndefined> implements SomeOption<T> {
   constructor(private readonly val: T) {}
 
   get type() {
-    return OptionType.Some;
+    return OptionType.Some
   }
 
   isSome() {
-    return true;
+    return true
   }
 
   isNone() {
-    return false;
+    return false
   }
 
   match<B>(fn: Match<T, B>): B {
-    return fn.some(this.val);
+    return fn.some(this.val)
   }
 
   map<U extends NonUndefined>(fn: (val: T) => U): Option<U> {
-    return Some(fn(this.val));
+    return Some(fn(this.val))
   }
 
   inspect(fn: (val: T) => void): Option<T> {
-    fn(this.val);
-    return this;
+    fn(this.val)
+    return this
   }
 
   andThen<U extends NonUndefined>(fn: (val: T) => Option<U>): Option<U> {
-    return fn(this.val);
+    return fn(this.val)
   }
 
   or<U extends NonUndefined>(_optb: Option<U>): Option<T> {
-    return this;
+    return this
   }
 
   orElse(optb: () => Option<T>): Option<T> {
-    return this;
+    return this
   }
 
   and<U extends NonUndefined>(optb: Option<U>): Option<U> {
-    return optb;
+    return optb
   }
 
   unwrapOr(_def: T): T {
-    return this.val;
+    return this.val
   }
 
   unwrap(): T {
-    return this.val;
+    return this.val
   }
 }
 
@@ -268,55 +268,55 @@ class SomeImpl<T extends NonUndefined> implements SomeOption<T> {
  */
 class NoneImpl<T extends NonUndefined> implements NoneOption<T> {
   get type() {
-    return OptionType.None;
+    return OptionType.None
   }
 
   isSome() {
-    return false;
+    return false
   }
 
   isNone() {
-    return true;
+    return true
   }
 
   match<U>({ none }: Match<T, U>): U {
     if (typeof none === 'function') {
-      return (none as () => U)();
+      return (none as () => U)()
     }
 
-    return none;
+    return none
   }
 
   map<U extends NonUndefined>(_fn: (val: T) => U): Option<U> {
-    return new NoneImpl<U>();
+    return new NoneImpl<U>()
   }
 
   inspect(fn: (val: T) => void): Option<T> {
-    return this;
+    return this
   }
 
   andThen<U extends NonUndefined>(_fn: (val: T) => Option<U>): Option<U> {
-    return new NoneImpl<U>();
+    return new NoneImpl<U>()
   }
 
   or<U extends NonUndefined>(optb: Option<U>): Option<U> {
-    return optb;
+    return optb
   }
 
   orElse(optb: () => Option<T>): Option<T> {
-    return optb();
+    return optb()
   }
 
   and<U extends NonUndefined>(_optb: Option<U>): Option<U> {
-    return new NoneImpl<U>();
+    return new NoneImpl<U>()
   }
 
   unwrapOr(def: T): T {
-    return def;
+    return def
   }
 
   unwrap(): never {
-    throw new ReferenceError('Trying to unwrap None.');
+    throw new ReferenceError('Trying to unwrap None.')
   }
 }
 
@@ -335,7 +335,7 @@ class NoneImpl<T extends NonUndefined> implements NoneOption<T> {
  * ```
  */
 export function Some<T extends NonUndefined>(val: T): Option<T> {
-  return new SomeImpl(val);
+  return new SomeImpl(val)
 }
 
 /**
@@ -349,7 +349,7 @@ export function Some<T extends NonUndefined>(val: T): Option<T> {
  * console.log(option.isNone()); // Outputs: true
  * ```
  */
-export const None: Option<any> = new NoneImpl(); // eslint-disable-line @typescript-eslint/no-explicit-any
+export const None: Option<any> = new NoneImpl()
 
 /**
  * Type guard to check if an Option is a Some value.
@@ -368,7 +368,7 @@ export const None: Option<any> = new NoneImpl(); // eslint-disable-line @typescr
  * ```
  */
 export function isSome<T extends NonUndefined>(val: Option<T>): val is SomeOption<T> {
-  return val.isSome();
+  return val.isSome()
 }
 
 /**
@@ -388,5 +388,5 @@ export function isSome<T extends NonUndefined>(val: Option<T>): val is SomeOptio
  * ```
  */
 export function isNone<T extends NonUndefined>(val: Option<T>): val is NoneOption<T> {
-  return val.isNone();
+  return val.isNone()
 }
