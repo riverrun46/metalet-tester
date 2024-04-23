@@ -3,7 +3,6 @@ export const dynamic = 'force-dynamic'
 import { isRunestone } from '@/runestone/artifact'
 import { type Cenotaph } from '@/runestone/cenotaph'
 import { Runestone } from '@/runestone/runestone'
-import { RunestoneSpec, tryDecodeRunestone } from '@/runestone'
 
 export async function POST(request: Request) {
   const requestJson = await request.json()
@@ -33,36 +32,6 @@ export async function POST(request: Request) {
   }
   vout.push({ scriptPubKey: { hex: script } })
   const runestoneTx = { vout }
-  // const artifact = tryDecodeRunestone(runestoneTx)
-
-  // if (!artifact) {
-  //   return new Response(
-  //     JSON.stringify({
-  //       type: 'none',
-  //     }),
-  //     { status: 200 },
-  //   )
-  // }
-
-  // if ('flaws' in artifact) {
-  //   console.log('artifact', artifact)
-  //   return new Response(
-  //     JSON.stringify({
-  //       type: 'cenotaph',
-  //       flaws: artifact.flaws,
-  //     }),
-  //     { status: 200 },
-  //   )
-  // }
-
-  // const runestone = artifact as RunestoneSpec
-  // return new Response(
-  //   JSON.stringify({
-  //     type: 'runestone',
-  //     spec: runestone,
-  //   }),
-  //   { status: 200 },
-  // )
 
   const artifact = Runestone.decipher(runestoneTx)
   if (artifact.isNone()) {
