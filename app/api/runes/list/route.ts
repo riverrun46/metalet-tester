@@ -5,11 +5,12 @@ import { DOMAIN } from '@/app/data/constants'
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const runename = searchParams.get('runename')
+  const network = searchParams.get('network')
 
   const sp = new URLSearchParams()
   sp.append('limit', '5')
   if (runename) {
-    sp.append('runename', runename)
+    sp.append('rune', runename)
   }
   const url = `${DOMAIN}/runes/info-list?${sp.toString()}`
   const res: any = await fetch(url, {
