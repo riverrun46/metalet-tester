@@ -9,6 +9,7 @@ export async function GET(request: Request) {
 
   const sp = new URLSearchParams()
   sp.append('limit', '5')
+  sp.append('sort', 'holders')
   if (runename) {
     sp.append('rune', runename)
   }
