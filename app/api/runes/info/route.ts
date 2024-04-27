@@ -1,5 +1,3 @@
-export const dynamic = 'force-dynamic'
-
 import { DOMAIN } from '@/app/data/constants'
 
 export async function GET(request: Request) {
