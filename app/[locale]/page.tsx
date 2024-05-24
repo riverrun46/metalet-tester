@@ -394,9 +394,64 @@ export default function Home() {
 
   return (
     <main className="flex min-h-screen items-center justify-center">
-      <div className="h-[80vh] aspect-[1.4] mor-shadow rounded-xl p-8 grid grid-cols-2 gap-4">
+      <div className="h-dvh lg:h-[80vh] lg:aspect-[1.4] lg:mor-shadow lg:rounded-xl p-4 lg:p-8 lg:grid lg:grid-cols-2 gap-4">
+        <div className="col-span-1 flex flex-col lg:overflow-y-hidden h-1/2 lg:h-auto ">
+          <div className="flex justify-between items-center flex-wrap pt-4 gap-4">
+            <div className="flex justify-start items-center px-4 gap-4 flex-wrap">
+              {/* 广播按钮 */}
+              {rawTxs.length > 0 &&
+                rawTxs.map((rawTx, index) => (
+                  <button
+                    className="px-4 h-6 mor-shadow-sm font-medium text-gray-500 rounded-full text-xs flex items-center justify-center"
+                    onClick={() => tryBroadcast(rawTx)}
+                    key={index}
+                  >
+                    {t('broadcast') + ' ' + (index + 1)}
+                  </button>
+                ))}
+
+              {/* 清除待广播按钮 */}
+              {rawTxs.length > 0 && (
+                <button
+                  className="px-4 h-6 mor-shadow-sm font-medium text-gray-500 rounded-full text-xs flex items-center justify-center"
+                  onClick={() => setRawTxs([])}
+                >
+                  {t('clearTx')}
+                </button>
+              )}
+            </div>
+
+            <div className="flex justify-end px-4 gap-x-4">
+              {/* 切换语言 */}
+              <Link
+                href={theOtherPath}
+                className="w-16 h-6 mor-shadow-sm font-medium text-gray-500 rounded-full text-xs flex items-center justify-center"
+              >
+                {theOther}
+              </Link>
+
+              {/* 清空按钮 */}
+              <button
+                className="w-16 h-6 mor-shadow-sm font-medium text-gray-500 rounded-full text-xs flex items-center justify-center"
+                onClick={() => clearConsole()}
+              >
+                {t('clear')}
+              </button>
+            </div>
+          </div>
+
+          {/* 控制台 */}
+          <div className="mor-inner rounded-xl p-4 text-gray-400 text-sm overflow-y-scroll mt-4 grow" id="console">
+            {consoleMessages.map((msg, i) => (
+              <p key={i} className={msg.startsWith('>') ? 'text-gray-400 mt-4 break-all' : 'break-all text-indigo-700'}>
+                {msg}
+              </p>
+            ))}
+          </div>
+        </div>
+
         {/* 操作面板 */}
-        <div className="col-span-1 overflow-y-auto px-4 pb-4">
+        <div className="col-span-1 overflow-y-auto px-4 pb-4 h-1/2 lg:h-auto pt-2 lg:pt-0">
           <h3 className="title col-span-3">{t('connect')}</h3>
           <div className="mt-4 grid grid-cols-3 gap-4">
             <button className="btn" onClick={() => command('connect')}>
@@ -499,61 +554,6 @@ export default function Home() {
               ))}
             </div>
           )}
-        </div>
-
-        <div className="col-span-1 flex flex-col overflow-y-hidden">
-          <div className="flex justify-between items-center flex-wrap pt-4 gap-4">
-            <div className="flex justify-start items-center px-4 gap-4 flex-wrap">
-              {/* 广播按钮 */}
-              {rawTxs.length > 0 &&
-                rawTxs.map((rawTx, index) => (
-                  <button
-                    className="px-4 h-6 mor-shadow-sm font-medium text-gray-500 rounded-full text-xs flex items-center justify-center"
-                    onClick={() => tryBroadcast(rawTx)}
-                    key={index}
-                  >
-                    {t('broadcast') + ' ' + (index + 1)}
-                  </button>
-                ))}
-
-              {/* 清除待广播按钮 */}
-              {rawTxs.length > 0 && (
-                <button
-                  className="px-4 h-6 mor-shadow-sm font-medium text-gray-500 rounded-full text-xs flex items-center justify-center"
-                  onClick={() => setRawTxs([])}
-                >
-                  {t('clearTx')}
-                </button>
-              )}
-            </div>
-
-            <div className="flex justify-end px-4 gap-x-4">
-              {/* 切换语言 */}
-              <Link
-                href={theOtherPath}
-                className="w-16 h-6 mor-shadow-sm font-medium text-gray-500 rounded-full text-xs flex items-center justify-center"
-              >
-                {theOther}
-              </Link>
-
-              {/* 清空按钮 */}
-              <button
-                className="w-16 h-6 mor-shadow-sm font-medium text-gray-500 rounded-full text-xs flex items-center justify-center"
-                onClick={() => clearConsole()}
-              >
-                {t('clear')}
-              </button>
-            </div>
-          </div>
-
-          {/* 控制台 */}
-          <div className="mor-inner rounded-xl p-4 text-gray-400 text-sm overflow-y-scroll mt-4 grow" id="console">
-            {consoleMessages.map((msg, i) => (
-              <p key={i} className={msg.startsWith('>') ? 'text-gray-400 mt-4 break-all' : 'break-all text-indigo-700'}>
-                {msg}
-              </p>
-            ))}
-          </div>
         </div>
       </div>
     </main>
