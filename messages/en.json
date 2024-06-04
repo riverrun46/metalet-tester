@@ -1,5 +1,7 @@
 {
   "Index": {
+    "networkChanged": "networkChanged",
+    "removeNetworkListener": "removeNetworkListener",
     "connect": "Connect",
     "clear": "Clear",
     "collapse": "Collapse",

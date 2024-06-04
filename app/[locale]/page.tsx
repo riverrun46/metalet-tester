@@ -493,8 +493,21 @@ export default function Home() {
         <div className="col-span-1 overflow-y-auto px-4 pb-4 h-1/2 lg:h-auto pt-2 lg:pt-0">
           <h3 className="title col-span-3">{t("connect")}</h3>
           <div className="mt-4 grid grid-cols-3 gap-4">
-            <button className="btn" onClick={() => command("connect")}>
-              test auto deploy
+            <button
+              className="btn"
+              onClick={() =>
+                wallet.on("networkChanged", async (network: string) => {
+                  await printMessage(network);
+                })
+              }
+            >
+              {t("networkChanged")}
+            </button>
+            <button
+              className="btn"
+              onClick={() => wallet.removeListener("networkChanged")}
+            >
+              {t("removeNetworkListener")}
             </button>
             <button className="btn" onClick={() => command("connect")}>
               {t("connect")}

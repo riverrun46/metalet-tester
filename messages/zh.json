@@ -1,5 +1,7 @@
 {
   "Index": {
+    "networkChanged": "监听网络状态",
+    "removeNetworkListener": "取消监听网络状态",
     "connect": "连接",
     "clear": "清除",
     "collapse": "收起",
